@@ -1,0 +1,44 @@
+{
+  "account": "wxid_XXXXXXXXXXXX",
+  "account_nickname": "小号昵称",
+  "rhythm": "fast",
+  "deepseek": {
+    "api_key": "YOUR_DEEPSEEK_API_KEY",
+    "base_url": "https://api.deepseek.com/v1",
+    "model": "deepseek-flash",
+    "temperature": 0.75,
+    "max_tokens": 150,
+    "reasoning_effort": "low",
+    "timeout": 60
+  },
+  "persona_file": "persona.md",
+  "system_prompt": "你是一个用微信聊天的朋友。说话自然、口语化，像真人发微信一样简短。不要用 Markdown、不要用列表、不要自称 AI 或助手。",
+  "knowledge": {
+    "enabled": true,
+    "dir": "knowledge",
+    "top_k": 3,
+    "min_score": 1.2,
+    "max_chars": 600
+  },
+  "web_search": {
+    "enabled": true,
+    "default_city": "深圳",
+    "top": 4,
+    "read_top": 1,
+    "max_chars": 600,
+    "timeout": 8,
+    "max_per_hour": 30
+  },
+  "behavior": {
+    "poll_interval": 2.0,
+    "reply_min_gap_same_chat": 4.0,
+    "global_max_per_hour": 120,
+    "history_turns": 8,
+    "max_reply_chars": 32,
+    "max_sentences": 2,
+    "ignore_groups": true,
+    "reply_only_whitelist": false,
+    "whitelist": [],
+    "quiet_hours": []
+  }
+}

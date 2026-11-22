@@ -1,0 +1,11 @@
+# 真实配置含密钥与账号，不入库；用 config.example.json 复制
+config.json
+
+# 运行时产物
+state.json
+bot.pid
+__pycache__/
+*.pyc
+
+# 本地虚拟环境
+.venv/
