@@ -1,0 +1,89 @@
+{
+  "note": "同一脚本两次独立运行（样本 100 / 500）。任务B、C 的规模由真实文件数决定，不随 --n 变化",
+  "platform": "win32",
+  "python": "3.13.14",
+  "runs": [
+    {
+      "sample_size": 100,
+      "generated_at": "2026-11-23 12:29:06",
+      "results": [
+        {
+          "task": "A 批量重命名",
+          "n": 100,
+          "seconds": 0.033,
+          "verified": true,
+          "seconds_median": 0.033,
+          "seconds_min": 0.0318,
+          "repeat": 3
+        },
+        {
+          "task": "B 日志报错统计",
+          "n": 439,
+          "seconds": 0.0014,
+          "verified": true,
+          "detail": {
+            "收到消息": 76,
+            "ERROR": 5,
+            "COM 错误": 1,
+            "成功回复": 70,
+            "WARN": 12
+          },
+          "seconds_median": 0.0015,
+          "seconds_min": 0.0014,
+          "repeat": 3
+        },
+        {
+          "task": "C 仓库规模清单",
+          "n": 30,
+          "seconds": 0.0402,
+          "verified": true,
+          "output": "01-Field-Discovery\\raw_data\\task10-repo-inventory.csv",
+          "seconds_median": 0.0347,
+          "seconds_min": 0.0292,
+          "repeat": 3
+        }
+      ]
+    },
+    {
+      "sample_size": 500,
+      "generated_at": "2026-11-23 12:29:09",
+      "results": [
+        {
+          "task": "A 批量重命名",
+          "n": 500,
+          "seconds": 0.1609,
+          "verified": false,
+          "seconds_median": 0.1635,
+          "seconds_min": 0.1609,
+          "repeat": 3
+        },
+        {
+          "task": "B 日志报错统计",
+          "n": 439,
+          "seconds": 0.0012,
+          "verified": true,
+          "detail": {
+            "收到消息": 76,
+            "ERROR": 5,
+            "COM 错误": 1,
+            "成功回复": 70,
+            "WARN": 12
+          },
+          "seconds_median": 0.0013,
+          "seconds_min": 0.0012,
+          "repeat": 3
+        },
+        {
+          "task": "C 仓库规模清单",
+          "n": 30,
+          "seconds": 0.058,
+          "verified": true,
+          "output": "01-Field-Discovery\\raw_data\\task10-repo-inventory.csv",
+          "seconds_median": 0.0646,
+          "seconds_min": 0.058,
+          "repeat": 3
+        }
+      ]
+    }
+  ]
+}
