@@ -42,7 +42,8 @@ ICEC-2026-0241-zhujing/
 │   ├── README.md              # 项目说明、架构、复现步骤
 │   ├── src/                   # 全部源码
 │   ├── process_logs/          # 真实运行日志（Telemetry，已脱敏）
-│   └── iterations/            # 三轮迭代记录（缺陷 → 定位 → 修复 → 验证）
+│   ├── iterations/            # 四轮迭代记录（缺陷 → 定位 → 修复 → 验证）
+│   └── worklog/               # 逐日开发工作日志（开工核查 / 决策 / 执行记录）
 └── 03-AI-Collaboration/       # 关键 AI 提问与排障对话记录
 ```
 
