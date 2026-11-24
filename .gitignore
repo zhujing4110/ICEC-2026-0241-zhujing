@@ -9,3 +9,6 @@ __pycache__/
 
 # 第三方库在运行/测试时自己写的日志
 wechatauto_logs/
+
+# 课题10 人工计时用的样张目录（本地生成，不入库）
+01-Field-Discovery/.manual/
