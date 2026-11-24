@@ -7,7 +7,7 @@
     "base_url": "https://api.deepseek.com/v1",
     "model": "deepseek-flash",
     "temperature": 0.75,
-    "max_tokens": 150,
+    "max_tokens": 320,
     "reasoning_effort": "low",
     "timeout": 60
   },
@@ -29,6 +29,106 @@
     "timeout": 8,
     "max_per_hour": 30
   },
+  "proactive": {
+    "enabled": true,
+    "target": "",
+    "morning": {
+      "enabled": true,
+      "start": "08:00",
+      "end": "09:30"
+    },
+    "evening": {
+      "enabled": true,
+      "start": "21:30",
+      "end": "22:50"
+    },
+    "followup": {
+      "enabled": true,
+      "min_minutes": 45,
+      "max_minutes": 480,
+      "jitter_minutes": 25
+    },
+    "quiet_hours": [
+      "23:00",
+      "08:00"
+    ],
+    "max_per_day": 8,
+    "min_gap_minutes": 40,
+    "no_chase": true,
+    "chase_reset_hours": 12
+  },
+  "burst": {
+    "enabled": true,
+    "probability": 1.0,
+    "max_bubbles": 2,
+    "gap_seconds": [
+      0.8,
+      1.8
+    ]
+  },
+  "pacing": {
+    "enabled": true,
+    "settle_seconds": [
+      2,
+      4
+    ],
+    "settle_per_extra": 1.0,
+    "max_settle_seconds": 15,
+    "think_seconds": [
+      0.6,
+      1.8
+    ],
+    "think_per_char": 0.015,
+    "think_max": 2.5,
+    "allow_silence": true,
+    "silence_probability": 0.25,
+    "silence_max_streak": 1
+  },
+  "memory": {
+    "enabled": true,
+    "max_items": 40,
+    "inject_limit": 6
+  },
+  "learn": {
+    "enabled": true,
+    "max_per_day": 5,
+    "min_gap_minutes": 20,
+    "start": "09:00",
+    "end": "23:00",
+    "idle_minutes": 10,
+    "allow_invent": true,
+    "queue_max": 40,
+    "learned_dir": "learned",
+    "interests": "视觉设计、AI 工具、深圳本地生活"
+  },
+  "stickers": {
+    "enabled": true,
+    "dir": "stickers",
+    "max_items": 160,
+    "use_probability": 0.95,
+    "min_gap_minutes": 5,
+    "collect_enabled": true,
+    "collect_interval_hours": 2,
+    "collect_count": 3,
+    "collect_start": "09:30",
+    "collect_end": "23:00",
+    "emotions": [
+      "无语",
+      "开心",
+      "累了",
+      "疑惑",
+      "尴尬",
+      "生气",
+      "加油",
+      "晚安"
+    ],
+    "interests": "猫、咖啡、画图"
+  },
+  "webui": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8765
+  },
   "behavior": {
     "poll_interval": 2.0,
     "reply_min_gap_same_chat": 4.0,
@@ -40,5 +140,18 @@
     "reply_only_whitelist": false,
     "whitelist": [],
     "quiet_hours": []
+  },
+  "inbox": {
+    "enabled": true,
+    "dir": "inbox",
+    "max_items": 60
+  },
+  "desk": {
+    "enabled": true,
+    "approve_timeout": 300,
+    "max_rounds": 3,
+    "max_tokens": 420,
+    "tools": [],
+    "extra_roots": []
   }
 }

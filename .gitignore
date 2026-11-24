@@ -6,3 +6,6 @@ __pycache__/
 
 # 课题10 基准脚本的临时沙箱（每次运行自动清理，防止残留入库）
 01-Field-Discovery/.bench/
+
+# 第三方库在运行/测试时自己写的日志
+wechatauto_logs/
