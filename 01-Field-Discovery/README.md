@@ -5,7 +5,7 @@
 > 当前状态：
 > - 课题 10 —— **数据已产出，人工耗时按估算**。脚本侧为实测（重复 3 次取中位），人工侧为动作拆解估算；
 >   `task10-batch-audit.csv` 的「本人实测·待补」列 5 行待回填，因此倍数一律标「按估算」，只作数量级。
-> - 课题 02 —— **待实测**。`raw_data/task02-phone-thermal.csv` 是 24 行空表（4 工况 × 6 时间点），需本人持机测量后回填；段起点写 `task02-phase-start.csv`。
+> - 课题 02 —— **本次未采集数据**。`raw_data/task02-phone-thermal.csv` 是 24 行空表（4 工况 × 6 时间点），`task02-phase-start.csv` 只有表头；交付的是采样设计 + 记录/核算脚本 + 空表，不是测量结果。
 
 ## 一、为什么选这两个（含中途评估过第三项）
 
@@ -135,11 +135,12 @@ python tools/task02_analyze.py
 ```
 01-Field-Discovery/
 ├── README.md                        # 本文件
-├── report.md                        # 两个课题的报告（课题10 已完成 / 课题02 待实测）
+├── report.md                        # 两个课题的报告（课题10 有数据·人工列估算 / 课题02 未采集）
 ├── photos/                          # 现场同框照
 ├── raw_data/
 │   ├── task02-phone-thermal.csv     # 课题02：24 行时序表，待填
 │   ├── task02-phase-start.csv       # 课题02：四段起点读数（脚本自动写）
+│   ├── README.md                    # 本目录说明：哪些表有数值、哪些是空表
 │   ├── task10-batch-audit.csv       # 课题10：审计表，人工实测列待补
 │   ├── task10-benchmark-result.json # 课题10：两次运行的原始计时
 │   └── task10-repo-inventory.csv    # 课题10：任务C 产物（仓库文件清单）
