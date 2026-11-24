@@ -72,11 +72,13 @@ python tools/task10_benchmark.py --n 500 --repeat 3   # 扩展性验证
 ### 现成的计时工具（省掉自己算）
 
 ```bash
-python tools/task10_manual_timer.py --samples 100   # 造 100 个乱名样张，给第 1 项用
+python tools/task10_manual_timer.py --kit           # 一次生成四项耗材（样张/图/文本/日志切片）
 python tools/task10_manual_timer.py                 # 逐项掐表，只打印不写表
 python tools/task10_manual_timer.py --write         # 掐完直接写回 CSV 并重算倍数
 python tools/task10_manual_timer.py --only 3        # 只测第 3 项
 ```
+
+`--kit` 会生成四样东西到 `.manual/`（已 gitignore）：100 个乱名截图、10 张待打标图（主色 × 形状）、8 个待统计文本、100 行真实日志切片。省掉自己找素材的时间，四项合计约 4~5 分钟。
 
 每项按「回车开始 → 干活 → 回车停表」走一遍，工具问你这段时间做了多少个单位，然后按 `单件 × 全量` 换算。
 **换算过程会写进备注列**（例：`实测样本 20 件 150 s，×5 推算至全量`），读者一眼能分清哪个是实测、哪个是推算，不做静默换算。
