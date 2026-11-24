@@ -36,30 +36,54 @@
 微信窗口（小号）
    │  ① 解密本地 SQLite 轮询（只读）
    ▼
-bridge.py
+bridge.py ── 收：只把消息塞进 pending（文字 + 方括号事件），推进水位
    ├─ 会话过滤：只处理私聊，跳过群/公众号/系统号
    ├─ 水位控制：记录每个会话最后处理的消息 seq，防重复回复
    ├─ 去重 + 频率限制：同会话最小间隔 4s，全局 120 条/小时
+   ├─ inbox.py         → 图片/表情/语音/文件/链接 转成 [他发来一个表情包：无语]
+   ▼
+maybe_answer_pending() ── 答：等他不发了再一起回应
+   ├─ settle 2–4s（每多一条 +1s，上限 15s）+ think 0.6–1.8s
+   ├─ 纯应答词可按概率不接（0.25），但不会连着两次不理
    ▼
 上下文构造
    ├─ persona.md          → 人设卡（性格、长度示范、红线）
    ├─ knowledge/*.md      → 本地知识库（jieba + BM25 检索，零成本）
+   ├─ memory/*.json       → 一人一份长期记忆（40 条上限，按相关性注入）
    └─ websearch.py        → 按需联网（Bing 抓取 + wttr.in 天气）
    ▼
-DeepSeek API（deepseek-flash, reasoning_effort=low）
+DeepSeek API（deepseek-flash, reasoning_effort=low, max_tokens=320）
+   │  ← 需要看电脑时，返回 tool_calls（function calling）
    ▼
-clean_reply()  按句切分 → 超句数丢弃 → 超字数在逗号处断
+clean_reply()  按句切分 → 超句数丢弃 → 超字数在逗号处断 → 拆 | 分段
    ▼
 UI 自动化发送（显示名快速路径 + 三次重试兜住 COM 瞬时错误）
+   ├─ 表情包：从库里按情绪词挑一张，剪贴板发图
+   └─ 看电脑：desk.py 5 个只读工具 → 截屏 + Windows OCR
+              → 控制台人工批准 → 带着结果二次生成
+
+webui.py（127.0.0.1:8765，标准库实现）
+   └─ 消息流水 / 人设编辑 / 记忆 / 表情墙 / 他发来的 / 她的电脑（实时画面 + 待批条）
 ```
 
 ## 四、关键技术决策
 
-**1. 为什么用 `SEARCH: 关键词` 而不是 function calling**
+**1. 联网为什么用 `SEARCH: 关键词` 而不是 function calling**
+
 大模型联网有两种做法：tools/function calling，或者约定标记。选后者是因为调试成本低——模型输出什么、程序怎么判断、二次生成用了什么资料，全部落在日志里一行行可查。tools 的中间态藏在 API 返回结构里，排障时反而更绕。
 
+**补记（11-24，结论被部分修正）**：后来做"看电脑"时改用了原生 function calling。区别在于**参数是否结构化**——`look_screen`、`find_files` 要带路径和关键词，用文本协议拼参数会很难校验；而 `SEARCH:` / `STICKER:` 后面只有一个词，标记法更直接。
+
+所以现在的分工是：**单值意图用标记，带参数的操作用 function calling。** 这不是"哪种更好"，是"哪种在这个场景里出错更少"。
+
+**1.1 用 function calling 踩到的坑**
+
+`tool_calls` 非空时 `content` 是空串，这是**正常返回**。第一版把它当成 `finish_reason=length` 的截断去翻倍重试，导致同一次工具申请请求了两遍。判断条件必须先看 `tool_calls`，再看 `content`。
+
 **2. 为什么要四层控制回复长度**
-只写"回答要短"在提示词里没有用。实测模型会输出 48 字还带三个转折和一个反问。最终做成：人设给长度示范（6 组对照）+ `max_tokens=150` + `reasoning_effort=low` + 程序硬裁到 32 字。
+只写"回答要短"在提示词里没有用。实测模型会输出 48 字还带三个转折和一个反问。最终做成：人设给长度示范（6 组对照）+ `max_tokens` + `reasoning_effort=low` + 程序硬裁到 32 字。
+
+`max_tokens` 这一项后来从 150 调到 320：150 会把思考链之后的表情包标记行截掉，而正文非空时程序不重试，等于静默丢失（见 iteration-06）。**上限不是越小越省，太小会吃掉本该输出的东西。**
 
 **3. 为什么发消息用显示名而不是 wxid**
 传 wxid 每次都要重新搜索会话，单次 13 秒；传显示名走"会话复用"快速路径，1.4 秒。有重名好友时自动退回 wxid，牺牲速度换正确性。
@@ -72,21 +96,24 @@ UI 自动化发送（显示名快速路径 + 三次重试兜住 COM 瞬时错误
 ```bash
 python -m venv .venv
 .venv/Scripts/pip install wechatauto-replica uiautomation pywin32 pyperclip pillow psutil jieba
+.venv/Scripts/pip install winrt-Windows.Media.Ocr winrt-Windows.Graphics.Imaging winrt-Windows.Storage.Streams winrt-Windows.Foundation winrt-Windows.Globalization winrt-runtime
 cp src/config.example.json src/config.json    # 填 api_key 与 account
-python src/bridge.py
+python src/bridge.py                          # 控制台在 127.0.0.1:8765
 ```
 
-环境：Windows 11 + 微信桌面版 4.2.0.13 + Python 3.13。微信需已登录且窗口不最小化。
+环境：Windows 11 + 微信桌面版 4.2.0.13 + Python 3.13。微信需已登录且窗口不最小化。最后一行 winrt 依赖只有"看屏幕"用得上，不需要可以跳过（对应功能会自禁用）。
 
 ## 六、证据对照（评分点 → 文件）
 
 | 官方要求 | 本仓库对应 |
 |---|---|
-| 连续运行日志（含时间戳、调用频次、耗时、报错） | `process_logs/runtime-2026-11-21.log`（439 行真实日志） |
-| 至少 3 次迭代 Diff 记录 | `iterations/iteration-01~04.md`（4 份，超出要求） |
-| 逐日推进过程可追溯 | `worklog/2026-11-23.md`（开工核查 → 决策 → 执行记录，含未完成项与风险） |
-| 完整源码 | `src/`（6 个文件，约 1200 行） |
-| 真实用户反馈 | README 第六节记录了使用边界与风险；使用者为本人及 1 位日常联系人 |
+| 连续运行日志（含时间戳、调用频次、耗时、报错） | `process_logs/` 两份真实日志：11-21 首日 439 行、11-24 能力扩展后 317 行 |
+| 至少 3 次迭代 Diff 记录 | `iterations/iteration-01~08.md`（8 份，超出要求） |
+| 逐日推进过程可追溯 | `worklog/2026-11-23.md`、`worklog/2026-11-24.md`（开工核查 → 决策 → 执行记录，含未完成项与判断失误） |
+| 完整源码 | `src/`（12 个模块，约 5900 行，含人设卡与示例配置） |
+| 功能机制与参数 | `docs/`（7 份：节奏、表情包、收件、看电脑、自学、主动消息、控制台与记忆） |
+| 可复现的验证 | `tests/`（10 个脚本、130+ 断言，离线跑不碰真实微信） |
+| 真实用户反馈 | 根 README 第六节记录了使用边界与风险；使用者为本人及 1 位日常联系人，迭代记录里的"现象"均为真实反馈原话 |
 
 ## 七、已知缺陷（未解决，如实记录）
 
@@ -95,3 +122,9 @@ python src/bridge.py
 3. **会话水位靠 seq 单调递增**：若微信重装导致 msg seq 重置，会漏读历史
 4. **知识库为纯词法检索**：问"城市"匹配不到"深圳"，只能靠文档按问法写来缓解，未接 embedding
 5. **联网时回复延迟翻倍**：3–4.4 s，微信端没有"正在输入"提示，用户感知为卡顿
+6. **模型没有视觉**：图里是什么、语音说了什么都不知道；"看屏幕"是 OCR 认字，不是真看见
+7. **看电脑每步都要批准**：一次事可能要点 2–3 次；"5 分钟内同类自动允许"没做
+8. **表情库只有 9 张**：缺「累了 / 开心 / 尴尬」，情绪词挑不到图时这一轮不配图
+9. **OCR 对界面小字有限**：浅色字、滚动区域外、图片里的文字都读不到
+10. **日志无轮转**：单文件已累积 2231 行 / 220 KB，需要手工切分
+11. **等待窗口无"正在输入"信号**：只能用"最后一条消息的时间"近似，对方打字很慢时仍会抢答
