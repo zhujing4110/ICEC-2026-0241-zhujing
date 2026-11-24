@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园高峰排队吞吐率建模 · 食堂窗口 × 电梯群</title>
+<style>
+:root{
+  --bg:#ffffff; --paper:#f5f7fb; --ink:#16202e; --muted:#5b6878; --faint:#8794a5;
+  --line:#dfe6ef; --line2:#eaeef5; --accent:#2f5fe0; --accent-soft:#eaf0ff;
+  --orange:#e07b2f; --green:#1e8e5a; --red:#d0453b; --purple:#7c56d6;
+  --card:#ffffff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px 80px}
+.doc-head{background:linear-gradient(160deg,#f0f5ff 0%,#fbfcff 55%,#fff 100%);border-bottom:1px solid var(--line);padding:44px 0 34px;margin-bottom:30px}
+.doc-head .wrap{padding-bottom:0}
+.eyebrow{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:700;text-transform:uppercase;margin-bottom:12px}
+h1{font-size:31px;line-height:1.35;margin:0 0 10px;letter-spacing:-.4px;font-weight:750}
+.sub{font-size:16px;color:var(--muted);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:12px;background:#fff;border:1px solid var(--line);color:var(--muted);padding:4px 11px;border-radius:20px}
+.tag b{color:var(--ink);font-weight:650}
+
+nav.toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:28px;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px}
+nav.toc a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line)}
+nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:22px;break-inside:avoid}
+h2{font-size:21px;margin:0 0 4px;letter-spacing:-.2px;font-weight:720;display:flex;align-items:baseline;gap:10px}
+h2 .num{font-size:12px;color:#fff;background:var(--accent);border-radius:6px;padding:3px 8px;font-weight:700;letter-spacing:.04em;flex:none}
+h2 + .lead{color:var(--muted);font-size:14px;margin:0 0 20px}
+h3{font-size:16px;margin:26px 0 10px;font-weight:700;padding-left:11px;border-left:3px solid var(--accent)}
+h4{font-size:14px;margin:18px 0 8px;font-weight:700;color:var(--muted)}
+p{margin:9px 0}
+ul,ol{margin:9px 0;padding-left:22px}
+li{margin:5px 0}
+small,.note{font-size:12.5px;color:var(--faint)}
+b,strong{font-weight:700}
+code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:.9em;background:#f1f4f9;border:1px solid var(--line2);border-radius:4px;padding:1px 5px;color:#294a8f}
+
+.callout{border-radius:10px;padding:14px 18px;margin:16px 0;font-size:14px;border:1px solid}
+.callout.blue{background:#f2f6ff;border-color:#d3e0ff}
+.callout.amber{background:#fff8f0;border-color:#f7dfc2}
+.callout.red{background:#fff4f3;border-color:#f6d3d0}
+.callout.green{background:#f1faf5;border-color:#c9ecd8}
+.callout .ct{font-weight:700;display:block;margin-bottom:4px}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfdff}
+.card .k{font-size:12px;color:var(--faint);letter-spacing:.03em}
+.card .v{font-size:22px;font-weight:750;line-height:1.35;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.card .d{font-size:12px;color:var(--muted)}
+.v.good{color:var(--green)} .v.warn{color:var(--orange)} .v.bad{color:var(--red)} .v.blue{color:var(--accent)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.kpi{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:#fcfdff}
+.kpi .k{font-size:11.5px;color:var(--faint)}
+.kpi .v{font-size:19px;font-weight:720;font-variant-numeric:tabular-nums;line-height:1.4}
+.kpi .u{font-size:11px;color:var(--faint);font-weight:500}
+
+.formula{background:#f7f9fd;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:14px 18px;margin:12px 0;overflow-x:auto;
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:13.5px;line-height:2.05;color:#22314a;white-space:nowrap}
+.formula .cm{color:#8794a5;font-family:inherit}
+.formula em{font-style:normal;color:var(--accent);font-weight:700}
+
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:middle}
+th{background:#f4f7fc;font-weight:700;color:#33415a;font-size:12.5px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:nth-child(even) td{background:#fcfdff}
+tr.hl td{background:#f2f6ff !important;font-weight:650}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700}
+.pill.ok{background:#e4f5eb;color:#157a48} .pill.warn{background:#fff0dd;color:#a85c14} .pill.bad{background:#fde9e7;color:#b23a31}
+
+.lab{background:#f8fafd;border:1px dashed #c9d6ea;border-radius:12px;padding:18px 20px;margin:18px 0}
+.lab-title{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.05em;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.grid-ctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 20px}
+.grid-ctrl.e{grid-template-columns:repeat(4,1fr)}
+.ctrl label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.4}
+.ctrl label b{color:var(--ink)}
+.ctrl .row{display:flex;align-items:center;gap:8px}
+input[type=range]{flex:1;min-width:0;accent-color:var(--accent);height:20px}
+input[type=number]{width:74px;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px;color:var(--ink);background:#fff;font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:7px;padding:6px 13px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#2450c4;color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.param-line{font-size:12.5px;color:var(--muted);background:#eef3fb;border-radius:7px;padding:8px 12px;margin-top:12px;font-variant-numeric:tabular-nums}
+
+.chart-box{border:1px solid var(--line);border-radius:10px;padding:14px 12px 8px;margin:16px 0;background:#fff;break-inside:avoid}
+.chart-title{font-size:13px;font-weight:700;margin:0 0 2px 6px}
+.chart-cap{font-size:12px;color:var(--faint);margin:0 0 8px 6px}
+svg.chart{width:100%;height:auto;display:block}
+.chart-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.bar{height:9px;border-radius:5px;background:#e9eef6;overflow:hidden;min-width:90px;display:inline-block;vertical-align:middle}
+.bar > i{display:block;height:100%;border-radius:5px;background:var(--accent)}
+.legend{font-size:11.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 0 6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+details{border:1px solid var(--line);border-radius:9px;padding:12px 16px;margin:12px 0;background:#fcfdff}
+summary{cursor:pointer;font-weight:650;font-size:14px;color:var(--accent)}
+pre{background:#f6f8fc;border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.65;
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;color:#26364f;margin:10px 0 0}
+footer{text-align:center;color:var(--faint);font-size:12px;padding:20px 0 0}
+hr{border:0;border-top:1px solid var(--line);margin:22px 0}
+
+@media (max-width:820px){
+  .cards,.kpis,.grid-ctrl,.grid-ctrl.e,.chart-two{grid-template-columns:1fr 1fr}
+  h1{font-size:25px}
+  .wrap{padding:0 14px 50px}
+  section{padding:20px 17px}
+}
+@media print{
+  :root{--paper:#fff}
+  body{background:#fff;font-size:11.5pt;line-height:1.6}
+  .doc-head{padding:20px 0 16px;background:#fff}
+  h1{font-size:21pt}
+  section{box-shadow:none;border:1px solid #ccd5e2;padding:14px 16px;margin-bottom:12px;break-inside:avoid;page-break-inside:avoid}
+  .lab{border-style:solid;background:#fafbfe}
+  .noprint,nav.toc,.btn-row{display:none !important}
+  .chart-box,.formula,table,pre{break-inside:avoid;page-break-inside:avoid}
+  details{display:block}
+  details > *:not(summary){display:block}
+  a{color:inherit;text-decoration:none}
+  @page{size:A4;margin:14mm 12mm}
+}
+</style>
+</head>
+<body>
+
+<div class="doc-head">
+  <div class="wrap">
+    <div class="eyebrow">Queueing / Throughput Modeling · 数学建模报告</div>
+    <h1>校园高峰排队吞吐率建模</h1>
+    <p class="sub">食堂窗口（M/M/c）与电梯群（批量服务 M/D/m）的解析求解、离散事件仿真验证与扩容/削峰方案量化对比</p>
+    <div class="meta">
+      <span class="tag">模型 <b>Erlang-C · Allen–Cunneen · DES</b></span>
+      <span class="tag">场景 <b>午餐食堂 / 早高峰电梯</b></span>
+      <span class="tag">求解 <b>解析 + 蒙特卡洛仿真</b></span>
+      <span class="tag">日期 <b>2026-11-24</b></span>
+      <span class="tag">交付 <b>单文件 · 可打印 A4</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<nav class="toc noprint">
+  <b style="color:#16202e">目录</b>
+  <a href="#s0">0 · 摘要与核心结论</a>
+  <a href="#s1">1 · 问题界定与符号</a>
+  <a href="#s2">2 · 模型一：食堂 M/M/c</a>
+  <a href="#s3">3 · 模型二：电梯批量服务</a>
+  <a href="#s4">4 · 仿真验证</a>
+  <a href="#s5">5 · 优化方案量化</a>
+  <a href="#s6">6 · 局限与改进</a>
+  <a href="#s7">7 · 附录：Python 复现</a>
+</nav>
+
+<!-- ============ 0 摘要 ============ -->
+<section id="s0">
+  <h2><span class="num">00</span> 摘要与核心结论</h2>
+  <p class="lead">先给结论：排队系统的瓶颈不是"平均到达率"，而是<b>峰值利用率 ρ 与 1 的距离</b>。</p>
+
+  <div class="callout blue">
+    <span class="ct">结论 1 · 排队存在"膝部"，ρ ≈ 0.85 是分水岭</span>
+    在食堂基准场景（λ = 40 人/分钟、12 个窗口、单窗 3.6 人/分钟）下 ρ = 0.926，平均排队 <b>13.6 秒 / 9.1 人</b>；把 ρ 压到 0.79（错峰、增开窗口或提速任一手段）后，排队降到 <b>约 2 秒 / 1.3 人</b>——利用率只降 14%，等待时间却下降 <b>85% 以上</b>。等待时间对 ρ 是超线性的（∝ 1/(1−ρ)），这是所有扩容决策的理论依据。
+  </div>
+  <div class="callout red">
+    <span class="ct">结论 2 · 电梯基准方案是不稳定系统（ρ &gt; 1），加梯不是唯一解</span>
+    基准（4 部 13 人梯、RTT 112 s、λ = 30 人/分钟）运力仅 <b>27.9 人/分钟</b>，ρ = <b>1.077</b>；每 5 分钟净积压 <b>10.7 人</b>，30 分钟早高峰结束时候梯队列会累积到约 <b>64 人</b>，且不会自行消散。单独"加 1 部梯"（ρ→0.862）或单独"目的层群控使停站从 5 降到 3"（ρ→0.942）都能转稳，<b>后者不增加硬件成本</b>，但余量更小。
+  </div>
+  <div class="callout green">
+    <span class="ct">结论 3 · 削峰的性价比通常高于扩容</span>
+    把 λ 从 40 降到 34（错峰下课 15% 或预约取餐），食堂排队即降到 2.2 秒，效果等同于增开 2 个窗口或把单窗服务从 16.7 s 缩到 14.3 s。削峰改变的是需求曲线，不增加固定成本；扩容改变供给，边际收益随 c 增大而递减。工程上优先削峰 + 小幅提速，再考虑硬件。
+  </div>
+
+  <h3>当前参数下的实时结论</h3>
+  <div id="dyn_summary" class="callout amber" style="font-size:14px">正在计算…</div>
+  <p class="note">上方结论随第 2、3 节实验台参数实时更新；修改滑块后可直接打印，报告会带上当前参数下的数值。</p>
+
+  <div class="cards">
+    <div class="card"><div class="k">食堂 · 系统利用率</div><div class="v warn" id="s_c_rho">—</div><div class="d">ρ = λ /(c·μ)，&lt; 1 才稳定</div></div>
+    <div class="card"><div class="k">食堂 · 平均排队等待</div><div class="v blue" id="s_c_wq">—</div><div class="d">W<sub>q</sub>，Erlang-C 解析解</div></div>
+    <div class="card"><div class="k">电梯 · 系统利用率</div><div class="v bad" id="s_e_rho">—</div><div class="d">ρ = λ·RTT/(m·K)</div></div>
+  </div>
+</section>
+
+<!-- ============ 1 问题界定 ============ -->
+<section id="s1">
+  <h2><span class="num">01</span> 问题界定、假设与符号表</h2>
+  <p class="lead">两类场景共用"到达过程 → 排队 → 服务台 → 离开"的结构，差别在<b>服务机制</b>：食堂是一人一服务，电梯是一批一服务。</p>
+
+  <h3>1.1 问题描述</h3>
+  <ul>
+    <li><b>食堂</b>：午餐高峰 11:50–12:20（30 min）集中到达，学生选窗口排成一队或多队，打菜+收银为一次服务。求：吞吐上限、平均队长、平均等待、需要多少窗口。</li>
+    <li><b>电梯</b>：早高峰上行，乘客在首层候梯，电梯按"上行—停靠—回落"循环运行，一次最多载 K 人。求：单梯往返时间、群梯运力、5 分钟输送能力、平均候梯时间、是否会无限积压。</li>
+  </ul>
+
+  <h3>1.2 模型假设</h3>
+  <table>
+    <tr><th style="width:22%">假设</th><th>食堂（M/M/c）</th><th>电梯（M/D/m 近似）</th><th style="width:20%">合理性 / 影响</th></tr>
+    <tr><td>到达过程</td><td>泊松流，率 λ（人/min）</td><td>泊松流，率 λ（人/min）</td><td>下课/上课是"批量触发"，短时内近似泊松；实际更聚集 → 模型偏乐观</td></tr>
+    <tr><td>服务时间</td><td>指数分布，单台率 μ（人/min）</td><td>近似确定型 RTT（变异系数小）</td><td>人工服务波动大，指数假设合适；电梯行程确定 → 用 M/M/m 会<b>高估等待约 2 倍</b>，故引入 Allen–Cunneen 修正</td></tr>
+    <tr><td>排队规则</td><td>FCFS，单队列多服务台 c</td><td>FCFS，m 部电梯，每批 ≤ K 人</td><td>若食堂为"每窗口各排一队"，性能略差于单队列</td></tr>
+    <tr><td>系统容量</td><td>无限等待位</td><td>无限等待位</td><td>现实中有人会放弃排队（balking），会低估放弃率</td></tr>
+    <tr><td>稳态</td><td>要求 ρ = λ/(cμ) &lt; 1</td><td>要求 ρ = λ·RTT/(m·K) &lt; 1</td><td>ρ ≥ 1 时队列期望发散，只能给有限时域仿真结果</td></tr>
+  </table>
+
+  <h3>1.3 符号表</h3>
+  <table>
+    <tr><th>符号</th><th>含义</th><th>单位</th><th>符号</th><th>含义</th><th>单位</th></tr>
+    <tr><td><em>λ</em></td><td>到达率</td><td>人/min</td><td><em>P<sub>0</sub></em></td><td>系统空闲概率</td><td>—</td></tr>
+    <tr><td><em>μ</em></td><td>单服务台服务率</td><td>人/min</td><td><em>P<sub>wait</sub></em></td><td>到达需等待概率（Erlang-C）</td><td>—</td></tr>
+    <tr><td><em>c / m</em></td><td>窗口数 / 电梯数</td><td>个</td><td><em>L<sub>q</sub></em></td><td>平均排队人数</td><td>人</td></tr>
+    <tr><td><em>a = λ/μ</em></td><td>提供负载（offered load）</td><td>Erlang</td><td><em>W<sub>q</sub></em></td><td>平均排队等待</td><td>min</td></tr>
+    <tr><td><em>ρ</em></td><td>系统利用率</td><td>—</td><td><em>W, L</em></td><td>平均逗留时间 / 系统内人数</td><td>min / 人</td></tr>
+    <tr><td><em>K</em></td><td>电梯额定载客</td><td>人</td><td><em>RTT</em></td><td>往返一次时间</td><td>s</td></tr>
+    <tr><td><em>H, S</em></td><td>最高层 / 期望停站数</td><td>层 / 次</td><td><em>C</em></td><td>系统运力（吞吐上限）</td><td>人/min</td></tr>
+  </table>
+
+  <div class="callout amber">
+    <span class="ct">一个必须说清的概念：吞吐率 ≠ 运力</span>
+    <b>稳态吞吐率</b> = 单位时间实际被服务完的人数，稳定系统里它恒等于 λ（来多少、走多少，受需求限制）；<b>运力 C</b> = c·μ（或 m·K·60/RTT），是系统上限（受供给限制）。当 λ &lt; C 时吞吐 = λ；当 λ ≥ C 时吞吐被钳位在 C，差额 <b>λ − C</b> 全部转化为队列净积压。本报告所有"吞吐率"结论都按这个定义给出，避免把"运力"误报成"实际吞吐"。
+  </div>
+</section>
+
+<!-- ============ 2 食堂 ============ -->
+<section id="s2">
+  <h2><span class="num">02</span> 模型一：食堂窗口 M/M/c（Erlang-C）</h2>
+  <p class="lead">求解稳态生灭过程，得到等待概率、队长、逗留时间的闭式解；再用参数扫描定位"膝部"。</p>
+
+  <h3>2.1 稳态解</h3>
+  <p>记 <em>a = λ/μ</em>，<em>ρ = a/c</em>。当 ρ &lt; 1 时，稳态概率 <em>p<sub>n</sub></em> 由生灭方程给出，归一化后：</p>
+  <div class="formula">
+P<sub>0</sub> = [ Σ<sub>n=0</sub><sup>c−1</sup> a<sup>n</sup>/n! + (a<sup>c</sup>/c!)·1/(1−ρ) ]<sup>−1</sup>   <span class="cm">// 归一化常数</span><br>
+P<sub>wait</sub> = (a<sup>c</sup>/c!)·1/(1−ρ) · P<sub>0</sub>                  <span class="cm">// Erlang-C：到达需排队</span><br>
+L<sub>q</sub> = P<sub>wait</sub> · ρ/(1−ρ)   <span class="cm">// 平均排队人数（关键：含 1/(1−ρ) 爆炸项）</span><br>
+W<sub>q</sub> = L<sub>q</sub>/λ , &nbsp; W = W<sub>q</sub> + 1/μ , &nbsp; L = λ·W = L<sub>q</sub> + a   <span class="cm">// Little 定律</span><br>
+吞吐 = min(λ, c·μ) , &nbsp; 净积压速率 = max(0, λ − c·μ)   <span class="cm">// 人/min</span>
+  </div>
+  <p class="note">数值实现用对数域 <code>n·ln a − lnΓ(n+1)</code> + log-sum-exp 计算，避免 c 较大时 a<sup>c</sup>/c! 溢出；ρ ≥ 1 直接判不稳定。</p>
+  <div id="c_sub" class="param-line">代入中…</div>
+
+  <h3>2.2 实验台（参数可调，结果实时联动全文）</h3>
+  <div class="lab">
+    <div class="lab-title"><span>◈ CANTEEN LAB · M/M/c</span>
+      <span class="noprint" style="font-weight:500;color:var(--faint);font-size:11.5px">拖动滑块 → 全文数值与 5 张图同步刷新</span></div>
+    <div class="grid-ctrl">
+      <div class="ctrl"><label><b>λ</b> 到达率（人/分钟）</label><div class="row"><input type="range" id="c_lam_r" min="10" max="60" step="0.5" value="40"><input type="number" id="c_lam_n" min="1" max="200" step="0.5" value="40"></div></div>
+      <div class="ctrl"><label><b>μ</b> 单窗服务率（人/分钟）</label><div class="row"><input type="range" id="c_mu_r" min="2" max="6" step="0.1" value="3.6"><input type="number" id="c_mu_n" min="0.5" max="20" step="0.1" value="3.6"></div></div>
+      <div class="ctrl"><label><b>c</b> 开放窗口数（个）</label><div class="row"><input type="range" id="c_c_r" min="4" max="20" step="1" value="12"><input type="number" id="c_c_n" min="1" max="40" step="1" value="12"></div></div>
+      <div class="ctrl"><label><b>T</b> 高峰时长（分钟）</label><div class="row"><input type="range" id="c_dur_r" min="10" max="60" step="5" value="30"><input type="number" id="c_dur_n" min="1" max="240" step="5" value="30"></div></div>
+      <div class="ctrl"><label>单人服务耗时 1/μ（秒）</label><div class="row"><input type="number" id="c_svc" step="0.1" value="16.7" disabled style="background:#f1f4f9;color:var(--muted)"></div></div>
+      <div class="ctrl"><label>高峰总到达 λ·T（人次）</label><div class="row"><input type="number" id="c_total" disabled style="background:#f1f4f9;color:var(--muted)"></div></div>
+    </div>
+    <div class="btn-row noprint">
+      <button class="btn primary" data-preset="base">基准</button>
+      <button class="btn" data-preset="peak">错峰 −15%</button>
+      <button class="btn" data-preset="expand">增开 2 窗</button>
+      <button class="btn" data-preset="combo">组合优化</button>
+      <button class="btn" id="btn_csv">导出扫描 CSV</button>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="k">利用率 ρ</div><div class="v" id="k_c_rho">—</div></div>
+    <div class="kpi"><div class="k">运力 C = c·μ</div><div class="v" id="k_c_cap">—</div><div class="u">人/分钟</div></div>
+    <div class="kpi"><div class="k">需排队概率 P<sub>wait</sub></div><div class="v" id="k_c_pwait">—</div></div>
+    <div class="kpi"><div class="k">稳态判定</div><div class="v" id="k_c_status">—</div></div>
+    <div class="kpi"><div class="k">平均队长 L<sub>q</sub></div><div class="v" id="k_c_lq">—</div><div class="u">人</div></div>
+    <div class="kpi"><div class="k">平均排队 W<sub>q</sub></div><div class="v" id="k_c_wq">—</div><div class="u">秒</div></div>
+    <div class="kpi"><div class="k">平均逗留 W</div><div class="v" id="k_c_w">—</div><div class="u">秒</div></div>
+    <div class="kpi"><div class="k">系统内人数 L</div><div class="v" id="k_c_l">—</div><div class="u">人</div></div>
+  </div>
+  <div id="k_c_backlog" class="callout green" style="font-size:13.5px">—</div>
+
+  <h3>2.3 参数扫描：等待时间的"膝部"</h3>
+  <p>固定 μ，扫描 λ，并对不同窗口数 c 分别求 W<sub>q</sub>。曲线在 ρ → 1 附近急剧上翘，这个拐点就是<b>设计容量必须避开的区域</b>。</p>
+  <div class="chart-two">
+    <div class="chart-box">
+      <div class="chart-title">图 1 · W<sub>q</sub> 随到达率 λ 的变化（不同 c）</div>
+      <div class="chart-cap">竖虚线 = 当前 λ；曲线终止处即该 c 的运力上限（ρ→1）</div>
+      <div id="chart1"></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">图 2 · 当前 c 下的平均队长 L<sub>q</sub></div>
+      <div class="chart-cap">横虚线 = 5 / 10 / 20 人的可接受阈值参考</div>
+      <div id="chart2"></div>
+    </div>
+  </div>
+  <div class="callout blue">
+    <span class="ct">读图要点</span>
+    ① 同一 λ 下，c 每增加 1~2 个，W<sub>q</sub> 下降幅度远大于线性比例，但 c 越大增益越小（<b>边际收益递减</b>）。
+    ② 工程上把目标定在 <b>ρ ≤ 0.85</b>，曲线在此左侧近乎平坦，系统对突发到达有缓冲；一旦越过 0.9，任何小幅波动都会造成排队陡增。
+    ③ 若 λ 本身有 ±20% 波动，按<b>峰值 λ</b> 而不是均值来配 c。
+  </div>
+</section>
+
+<!-- ============ 3 电梯 ============ -->
+<section id="s3">
+  <h2><span class="num">03</span> 模型二：电梯群批量服务（RTT 运力模型）</h2>
+  <p class="lead">电梯不是"一人一服务"，而是"一次行程服务一批 K 人"，必须先把 RTT 算出来，再折算成人/分钟的群梯运力。</p>
+
+  <h3>3.1 往返时间 RTT 与运力</h3>
+  <div class="formula">
+RTT = <em>2(H−1)·t<sub>f</sub></em> + <em>(S+1)·t<sub>s</sub></em> + <em>2·K·t<sub>p</sub></em>   <span class="cm">// 运行 + 停站开关门/加减速 + 上下客</span><br>
+单梯运力 = K · 60/RTT &nbsp;(人/min) , &nbsp; 群梯运力 <em>C = m·K·60/RTT</em><br>
+ρ = λ·RTT/(m·K·60) , &nbsp; 5-min 输送能力 = 5C , &nbsp; 5-min 需求 = 5λ<br>
+净积压速率 = max(0, λ − C) &nbsp;(人/min) , &nbsp; T 分钟末积压 ≈ (λ − C)·T<br>
+<em>W<sub>q</sub><sup>M/D/m</sup> ≈ ½ · W<sub>q</sub><sup>M/M/m</sup></em>   <span class="cm">// Allen–Cunneen：C<sub>a</sub>²=1, C<sub>s</sub>²=0 → 系数 ½</span>
+  </div>
+  <p>其中 <em>H</em> 为最高服务层、<em>t<sub>f</sub></em> 单层运行时间、<em>S</em> 为单程期望停站数、<em>t<sub>s</sub></em> 单次停站附加时间（开关门 + 加减速）、<em>t<sub>p</sub></em> 人均进出时间。批到达率 <em>λ<sub>b</sub> = λ/K</em>（批/min），批服务率 <em>μ<sub>b</sub> = 60/RTT</em>（批/min），代入 m 服务台的 Erlang-C 并乘 ½ 得到候梯时间的工程近似；<b>当 ρ ≥ 1 时该近似失效，以第 4 节仿真为准</b>。</p>
+  <div id="e_sub" class="param-line">代入中…</div>
+
+  <h3>3.2 实验台</h3>
+  <div class="lab">
+    <div class="lab-title"><span>◈ ELEVATOR LAB · M/D/m + RTT</span>
+      <span class="noprint" style="font-weight:500;color:var(--faint);font-size:11.5px">可模拟加梯 / 目的层群控 / 错峰</span></div>
+    <div class="grid-ctrl e">
+      <div class="ctrl"><label><b>λ</b> 到达率（人/分钟）</label><div class="row"><input type="range" id="e_lam_r" min="5" max="60" step="0.5" value="30"><input type="number" id="e_lam_n" min="1" max="200" step="0.5" value="30"></div></div>
+      <div class="ctrl"><label><b>m</b> 电梯部数</label><div class="row"><input type="range" id="e_m_r" min="1" max="10" step="1" value="4"><input type="number" id="e_m_n" min="1" max="20" step="1" value="4"></div></div>
+      <div class="ctrl"><label><b>K</b> 额定载客（人）</label><div class="row"><input type="number" id="e_K" min="4" max="30" step="1" value="13"></div></div>
+      <div class="ctrl"><label><b>H</b> 最高层</label><div class="row"><input type="number" id="e_H" min="2" max="60" step="1" value="12"></div></div>
+      <div class="ctrl"><label><b>t<sub>f</sub></b> 单层运行（s）</label><div class="row"><input type="number" id="e_tf" min="0.5" max="8" step="0.1" value="2.0"></div></div>
+      <div class="ctrl"><label><b>S</b> 期望停站数</label><div class="row"><input type="range" id="e_S_r" min="1" max="15" step="1" value="5"><input type="number" id="e_S_n" min="1" max="30" step="1" value="5"></div></div>
+      <div class="ctrl"><label><b>t<sub>s</sub></b> 单次停站附加（s）</label><div class="row"><input type="number" id="e_ts" min="1" max="30" step="0.5" value="7"></div></div>
+      <div class="ctrl"><label><b>t<sub>p</sub></b> 人均进出（s）</label><div class="row"><input type="number" id="e_tp" min="0.2" max="5" step="0.1" value="1.0"></div></div>
+    </div>
+    <div class="btn-row noprint">
+      <button class="btn primary" data-epreset="base">基准</button>
+      <button class="btn" data-epreset="lift">加 1 部梯</button>
+      <button class="btn" data-epreset="zone">目的层群控 S−2</button>
+      <button class="btn" data-epreset="peak">错峰 λ−13%</button>
+      <button class="btn" data-epreset="combo">组合优化</button>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="k">单梯 RTT</div><div class="v" id="k_e_rtt">—</div><div class="u">秒</div></div>
+    <div class="kpi"><div class="k">群梯运力 C</div><div class="v" id="k_e_cap">—</div><div class="u">人/分钟</div></div>
+    <div class="kpi"><div class="k">利用率 ρ</div><div class="v" id="k_e_rho">—</div></div>
+    <div class="kpi"><div class="k">稳态判定</div><div class="v" id="k_e_status">—</div></div>
+    <div class="kpi"><div class="k">5-min 需求 / 运力</div><div class="v" id="k_e_5min">—</div><div class="u">人</div></div>
+    <div class="kpi"><div class="k">5-min 净积压</div><div class="v" id="k_e_backlog">—</div><div class="u">人</div></div>
+    <div class="kpi"><div class="k">30-min 末队列</div><div class="v" id="k_e_q30">—</div><div class="u">人（线性外推）</div></div>
+    <div class="kpi"><div class="k">解析候梯 AWT</div><div class="v" id="k_e_awt">—</div><div class="u">秒（M/D/m 近似）</div></div>
+  </div>
+  <div id="k_e_msg" class="callout red" style="font-size:13.5px">—</div>
+
+  <h3>3.3 电梯数 m 与稳定性的关系</h3>
+  <div class="chart-box">
+    <div class="chart-title">图 3 · 利用率 ρ 随电梯部数 m 的变化</div>
+    <div class="chart-cap">红色水平线 ρ = 1 为稳定边界；绿色区域为可用设计区（ρ ≤ 0.85 更优）</div>
+    <div id="chart3"></div>
+  </div>
+  <div class="callout amber">
+    <span class="ct">为什么"减少停站"能和"加梯"一样有效</span>
+    RTT 中停站项 (S+1)·t<sub>s</sub> 占比常常超过 35%。目的层群控 / 奇偶层分区把 S 从 5 降到 3，RTT 由 112 s 降到 98 s，运力提升 <b>14.3%</b>，相当于凭空多出约 0.57 部电梯——而硬件投入为零。这是电梯优化里最容易被忽视的杠杆。
+  </div>
+</section>
+
+<!-- ============ 4 仿真 ============ -->
+<section id="s4">
+  <h2><span class="num">04</span> 离散事件仿真（DES）验证</h2>
+  <p class="lead">解析解依赖稳态与分布假设；用固定随机种子的蒙特卡洛仿真独立复算，检验公式是否可信。</p>
+
+  <h3>4.1 仿真设计</h3>
+  <ul>
+    <li><b>食堂</b>：生成 <code>Exp(λ)</code> 到达间隔与 <code>Exp(μ)</code> 服务时长；维护 c 个服务台的"下次空闲时刻"，FCFS 把每位顾客分配给最早空闲的服务台；统计 W<sub>q</sub>、W，并用 Little 定律反推 L<sub>q</sub>。</li>
+    <li><b>电梯</b>：人级事件驱动——到达事件入候梯队列；电梯 j 在 <code>freeAt[j]</code> 发车，装载 <code>min(K, 队列人数)</code> 人，服务时长取 <code>RTT·(1±10%)</code> 以反映行程波动；记录每人候梯时间与每 0.25 min 的队列长度。</li>
+    <li><b>输出分析（关键）</b>：ρ → 1 时等待序列自相关极强，短运行会因"从空系统启动"产生<b>系统性低估</b>（实测 15,000 样本短运行偏差可达 −23%）。因此食堂采用<b>单次长运行</b>：预热 20,000 人丢弃初始瞬态，测量 60,000 人并均分为 20 批，用<b>批均值法（batch means）</b>估计 95% 置信区间；一致性判据是"解析解是否落入 CI"，而非点估计偏差。</li>
+    <li>随机数用 <code>mulberry32</code>（避免线性同余发生器相邻样本相关的缺陷），固定种子 20261124，<b>结果可完全复现</b>；电梯有效样本 15,000 人 × 2 组。</li>
+  </ul>
+
+  <h3>4.2 解析 vs 仿真对比</h3>
+  <table id="tbl_validate">
+    <tr><th>场景</th><th class="num">指标</th><th class="num">解析解</th><th class="num">仿真值 [95% CI]</th><th class="num">点偏差</th><th>判定</th></tr>
+    <tr><td colspan="6" style="color:var(--faint)">计算中…</td></tr>
+  </table>
+  <p class="note" id="sim_note">—</p>
+
+  <div class="chart-two">
+    <div class="chart-box">
+      <div class="chart-title">图 4 · 食堂仿真累积均值收敛（60,000 样本）</div>
+      <div class="chart-cap">蓝线 = 长运行累积平均 W<sub>q</sub>；橙虚线 = Erlang-C 解析值；右侧趋于重合</div>
+      <div id="chart5"></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">图 5 · 电梯 30 分钟候梯队列演化</div>
+      <div class="chart-cap">蓝 = 基准方案；绿 = 组合优化方案（加梯 + 群控）</div>
+      <div id="chart4"></div>
+    </div>
+  </div>
+  <div class="callout blue">
+    <span class="ct">仿真告诉我们的四件事</span>
+    ① 食堂 M/M/c 的解析解落在仿真的 95% 置信区间内，公式可用于定容；但 CI 本身较宽（±20% 量级），说明 ρ 接近 1 时"平均等多久"极难稳定估计——这正是不该把系统设计在 ρ = 0.95 的实证理由。
+    ② 电梯在 ρ &gt; 1 时解析近似无效，但仿真清楚显示队列<b>单调增长不回落</b>——这正是"永远等不到电梯"的数学解释。
+    ③ 组合优化方案的队列在 30 分钟内始终被压在个位数，验证了 ρ ≤ 0.85 的设计目标。
+    ④ 方法论提醒：如果只用 15,000 样本的短仿真，会得到偏低约 20% 的等待时间，从而<b>错误地认为系统比实际更健康</b>。排队仿真必须先处理初始瞬态，否则结论不可用。
+  </div>
+</section>
+
+<!-- ============ 5 优化 ============ -->
+<section id="s5">
+  <h2><span class="num">05</span> 优化方案量化对比</h2>
+  <p class="lead">所有方案在同一需求下横向比较，给出 ρ、等待时间、下降幅度与实施成本，便于做决策而不是拍脑袋。</p>
+
+  <h3>5.1 食堂：五种方案</h3>
+  <table id="tbl_canteen_opt">
+    <tr><th>方案</th><th class="num">λ</th><th class="num">c</th><th class="num">μ</th><th class="num">ρ</th><th class="num">W<sub>q</sub>(s)</th><th class="num">L<sub>q</sub>(人)</th><th class="num">降幅</th><th>成本 / 可行性</th></tr>
+  </table>
+  <div id="c_opt_bar" style="margin:10px 0 4px"></div>
+
+  <h3>5.2 电梯：五种方案</h3>
+  <table id="tbl_elevator_opt">
+    <tr><th>方案</th><th class="num">λ</th><th class="num">m</th><th class="num">S</th><th class="num">RTT(s)</th><th class="num">C(人/min)</th><th class="num">ρ</th><th class="num">5-min 积压(人)</th><th>成本 / 可行性</th></tr>
+  </table>
+
+  <h3>5.3 决策建议</h3>
+  <ol>
+    <li><b>先测 λ，再谈扩容。</b>用 3 天午餐/早高峰的分时段计数（每 5 分钟一档）得到真实峰值 λ；很多"窗口不够"其实是"下课时间过于集中"。</li>
+    <li><b>优先削峰。</b>错峰 10–15 分钟、预约取餐、分批下课，是把峰值 λ 削平的最低成本手段，效果等价于 2 个窗口 / 1 部电梯。</li>
+    <li><b>其次提速。</b>食堂：预打包、双收银、把"选菜"与"结算"分离（串联变并联）；电梯：目的层群控、奇偶分区、减少无效停站。</li>
+    <li><b>最后扩容，并留余量。</b>按峰值 λ 配 c / m，目标 ρ ≤ 0.85，不要用平均 λ 配到 ρ = 0.95。</li>
+    <li><b>建立监控线。</b>把 "W<sub>q</sub> &gt; 60 s" 或 "L<sub>q</sub> &gt; 20 人" 设为触发阈值，实时开备用窗口 / 调度电梯，比一次性固定配置更鲁棒。</li>
+  </ol>
+</section>
+
+<!-- ============ 6 局限 ============ -->
+<section id="s6">
+  <h2><span class="num">06</span> 模型局限与改进方向</h2>
+  <table>
+    <tr><th style="width:26%">局限</th><th>影响方向</th><th>改进模型 / 方法</th></tr>
+    <tr><td>到达非平稳（下课是脉冲）</td><td>稳态假设低估峰值排队</td><td>非齐次泊松过程 λ(t)，分 5-min 时段逐段求解；或用 <code>PSA</code> 逐段稳态近似</td></tr>
+    <tr><td>服务时间分布被简化</td><td>电梯用 M/M/m 会高估等待约 2 倍</td><td>M/G/m + Allen–Cunneen；本文已用 ½ 系数修正，更精确可用矩阵几何法</td></tr>
+    <tr><td>食堂多队列而非单队列</td><td>实际等待略长、各队不均衡</td><td>拆成 c 个 M/M/1 并与单队列 M/M/c 对比（单队列严格更优）</td></tr>
+    <tr><td>串联服务被压成一级</td><td>忽略"选菜→打菜→收银"多级瓶颈</td><td>排队网络（Jackson 网络），逐节点找最大 ρ 的真瓶颈</td></tr>
+    <tr><td>忽略放弃排队 / 改走楼梯</td><td>高估长队时的实际队列</td><td>加入 balking / reneging 的 M/M/c/K 有限容量模型</td></tr>
+    <tr><td>电梯上下行混合、分区调度</td><td>RTT 为常数过于粗略</td><td>把 S 建模为 K、H 的函数：S ≈ H·[1−(1−1/H)<sup>K</sup>]，代入本文公式即可升级</td></tr>
+  </table>
+  <div class="callout green">
+    <span class="ct">一行公式即可升级停站数估计</span>
+    对 K 名乘客随机去往 H 个楼层，期望停靠层数（不含首层）为 <b>S ≈ H·[1 − (1 − 1/H)<sup>K</sup>]</b>。把它代入 RTT，模型就从"手填 S"变成"由客流结构自动推导"，适合写进论文的敏感性分析部分。
+  </div>
+</section>
+
+<!-- ============ 7 附录 ============ -->
+<section id="s7">
+  <h2><span class="num">07</span> 附录：Python 复现代码与参考</h2>
+
+  <details open>
+    <summary>附录 A · 可直接运行的 Python 复现脚本（Erlang-C + 仿真）</summary>
+<pre>"""校园高峰排队吞吐率建模 · 最小可复现脚本"""
+import math, random
+
+def erlang_c(lam, mu, c):
+    a, rho = lam/mu, lam/(c*mu)
+    if rho >= 1:
+        return dict(rho=rho, stable=False, cap=c*mu)
+    # 对数域求和，避免 a**c / c! 溢出
+    terms = [n*math.log(a) - math.lgamma(n+1) for n in range(c+1)]
+    mx = max(terms[:c])
+    S = sum(math.exp(t-mx) for t in terms[:c])
+    logS = mx + math.log(S)
+    log_last = terms[c] - math.log(1-rho)
+    m2 = max(logS, log_last)
+    den = math.exp(logS-m2) + math.exp(log_last-m2)
+    Pwait = math.exp(log_last-m2)/den
+    Lq = Pwait*rho/(1-rho)
+    return dict(rho=rho, Pwait=Pwait, Lq=Lq, Wq=Lq/lam,
+                W=Lq/lam+1/mu, L=lam*(Lq/lam+1/mu),
+                cap=c*mu, stable=True)
+
+def sim_mmc(lam, mu, c, n=60000, warm=20000, batches=20, seed=20261124):
+    """单次长运行 + 批均值法；返回 (Wq点估计秒, 95%置信区间)
+    注意：rho 接近 1 时等待序列自相关极强，短运行会系统性低估，
+    必须先丢弃足够长的初始瞬态，再用批均值估计方差。"""
+    rnd = random.Random(seed)
+    free = [0.0]*c
+    t = 0.0
+    per = n // batches
+    batch_means, bw, bc = [], 0.0, 0
+    for i in range(n + warm):
+        t += rnd.expovariate(lam)
+        j = min(range(c), key=lambda k: free[k])
+        st = max(t, free[j])
+        svc = rnd.expovariate(mu)
+        free[j] = st + svc
+        if i >= warm:
+            bw += st - t
+            bc += 1
+            if bc == per:
+                batch_means.append(bw / bc * 60)      # 秒
+                bw, bc = 0.0, 0
+    mean = sum(batch_means) / len(batch_means)
+    sd = (sum((b - mean)**2 for b in batch_means) / (len(batch_means)-1))**0.5
+    se = sd / len(batch_means)**0.5
+    return mean, (mean - 1.96*se, mean + 1.96*se)
+
+def rtt(H, tf, S, ts, K, tp):
+    return 2*(H-1)*tf + (S+1)*ts + 2*K*tp          # 秒
+
+def elevator_cap(m, K, R):
+    return m*K*60/R                                   # 人/分钟
+
+if __name__ == "__main__":
+    base = erlang_c(40, 3.6, 12)
+    print("食堂解析:", {k: round(v, 4) for k, v in base.items() if isinstance(v, float)})
+    mean, ci = sim_mmc(40, 3.6, 12)
+    print(f"食堂仿真: Wq={mean:.3f}s, 95%CI=[{ci[0]:.2f}, {ci[1]:.2f}], "
+          f"解析 {base['Wq']*60:.3f}s 是否落入CI: {ci[0] <= base['Wq']*60 <= ci[1]}")
+    R = rtt(H=12, tf=2.0, S=5, ts=7, K=13, tp=1.0)
+    C = elevator_cap(m=4, K=13, R=R)
+    print(f"电梯 RTT={R}s 运力 C={C:.2f} 人/min, rho={30/C:.3f}")
+</pre>
+  </details>
+
+  <details>
+    <summary>附录 B · 数学建模论文式结构（若需提交作业，按此改写为 Word）</summary>
+    <ul>
+      <li><b>一、问题重述</b>：校园高峰拥堵现象、需回答的 4 个量化问题（运力 / 等待 / 配置 / 优化）。</li>
+      <li><b>二、问题分析</b>：食堂与电梯的服务机制差异 → 分别选 M/M/c 与批量服务模型，附流程图。</li>
+      <li><b>三、模型假设</b>：本文 1.2 节表格。</li>
+      <li><b>四、符号说明</b>：本文 1.3 节表格。</li>
+      <li><b>五、模型建立与求解</b>：生灭方程 → Erlang-C 闭式解；RTT 分解 → 运力公式；Allen–Cunneen 修正。</li>
+      <li><b>六、模型检验</b>：离散事件仿真对比、敏感性分析（λ / μ / c / m / S 单因素扫描）、误差分析。</li>
+      <li><b>七、模型评价与推广</b>：优缺点、非平稳到达与排队网络推广。</li>
+      <li><b>八、结论与建议</b>：本文第 5.3 节 + 触发阈值监控方案。</li>
+      <li><b>附录</b>：Python 代码、原始计数数据、参数来源说明。</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>附录 C · 公式与资料出处</summary>
+    <ul>
+      <li>Erlang-C / M/M/c 稳态解：A. K. Erlang (1917)；标准排队论教材（如 Gross &amp; Harris, <i>Fundamentals of Queueing Theory</i>）。</li>
+      <li>Allen–Cunneen 近似（GI/G/m 等待时间）：W<sub>q</sub> ≈ ½(C<sub>a</sub>²+C<sub>s</sub>²)·W<sub>q</sub><sup>M/M/m</sup>。</li>
+      <li>Little 定律：L = λW（J. D. C. Little, 1961），本文用它从等待时间反推队长。</li>
+      <li>电梯 RTT 与 5 分钟输送能力：高层建筑设计常用上行高峰（up-peak）交通计算方法，参数需按实际建筑标定。</li>
+      <li><b>参数来源说明</b>：本报告 λ、μ、RTT 参数均为<b>教学示例值</b>，用于演示建模方法与量级；正式应用前须用现场计数（每 5 分钟一档，连续 3 天）重新标定。</li>
+    </ul>
+  </details>
+
+  <div class="btn-row noprint" style="margin-top:20px">
+    <button class="btn primary" onclick="window.print()">打印 / 导出 PDF（A4）</button>
+    <button class="btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">回到顶部</button>
+  </div>
+</section>
+
+<footer>校园高峰排队吞吐率建模 · 解析求解 + 离散事件仿真 · 单文件离线可用 · 2026-11-24</footer>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const V = id => parseFloat($(id).value);
+const clamp = (x,a,b) => Math.max(a,Math.min(b,x));
+const f1 = x => (isFinite(x)? x.toFixed(1):"∞");
+const f2 = x => (isFinite(x)? x.toFixed(2):"∞");
+const f3 = x => (isFinite(x)? x.toFixed(3):"∞");
+const pct = x => (isFinite(x)? (100*x).toFixed(1)+"%":"—");
+
+/* ---------- 数值核心 ---------- */
+function logGamma(z){
+  const g=[676.5203681218851,-1259.1392167224028,771.32342877765313,
+           -176.61502916214059,12.507343278686905,-0.13857109526572012,
+           9.9843695780195716e-6,1.5056327351493116e-7];
+  if(z<0.5) return Math.log(Math.PI/Math.sin(Math.PI*z))-logGamma(1-z);
+  z-=1; let x=0.99999999999980993;
+  for(let i=0;i<g.length;i++) x+=g[i]/(z+i+1);
+  const t=z+g.length-0.5;
+  return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x);
+}
+function erlangC(lam,mu,c){
+  const a=lam/mu, rho=a/c;
+  if(!(lam>0&&mu>0&&c>=1)) return {a:0,rho:0,stable:false,capacity:0};
+  if(rho>=1) return {a,rho,P0:0,Pwait:1,Lq:Infinity,Wq:Infinity,W:Infinity,L:Infinity,
+                     stable:false,capacity:c*mu,throughput:c*mu};
+  const t=[]; for(let n=0;n<=c;n++) t.push(n*Math.log(a)-logGamma(n+1));
+  let mx=-Infinity; for(let n=0;n<c;n++) mx=Math.max(mx,t[n]);
+  let S=0; for(let n=0;n<c;n++) S+=Math.exp(t[n]-mx);
+  const logS=mx+Math.log(S), logLast=t[c]-Math.log(1-rho);
+  const m2=Math.max(logS,logLast), d=Math.exp(logS-m2)+Math.exp(logLast-m2);
+  const Pwait=Math.exp(logLast-m2)/d, P0=Math.exp(-m2)/d;
+  const Lq=Pwait*rho/(1-rho), Wq=Lq/lam, W=Wq+1/mu, L=lam*W;
+  return {a,rho,P0,Pwait,Lq,Wq,W,L,stable:true,capacity:c*mu,throughput:lam};
+}
+function rttOf(p){ return 2*(p.H-1)*p.tf + (p.S+1)*p.ts + 2*p.K*p.tp; }
+function capOf(m,K,R){ return m*K*60/R; }
+
+/* ---------- 离散事件仿真 ---------- */
+function mulberry32(seed){
+  let a=seed>>>0;
+  return ()=>{
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+/* 单次长运行 + 批均值法（batch means）：丢弃初始瞬态后用批均值估计 95% CI。
+   ρ→1 时等待序列自相关极强，短运行/多次重启都会系统性低估，必须用长运行。 */
+function simMMC(lam,mu,c,n,seed,hist){
+  const rnd=mulberry32(seed), expo=r=>-Math.log(1-rnd())/r;
+  const free=new Array(c).fill(0);
+  const warm=20000, batches=20, per=Math.floor(n/batches);
+  let t=0,ws=0,ss=0,cnt=0,bw=0,bc=0;
+  const bm=[];
+  for(let i=0;i<n+warm;i++){
+    t+=expo(lam);
+    let j=0; for(let k=1;k<c;k++) if(free[k]<free[j]) j=k;
+    const st=Math.max(t,free[j]), svc=expo(mu);
+    free[j]=st+svc;
+    if(i>=warm){
+      const w=st-t;
+      ws+=w; ss+=st+svc-t; cnt++; bw+=w; bc++;
+      if(hist && cnt%1000===0) hist.push([cnt,(ws/cnt)*60]);
+      if(bc===per){ bm.push(bw/bc*60); bw=0; bc=0; }
+    }
+  }
+  const mean=ws/cnt*60, R=bm.length||1;
+  const sd=Math.sqrt(bm.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,R-1));
+  const se=sd/Math.sqrt(R);
+  return {WqS:mean, W:ss/cnt*60, Lq:lam*mean/60, L:lam*ss/cnt*60,
+          lo:mean-1.96*se, hi:mean+1.96*se, se, reps:R, n:cnt};
+}
+function simElevator(lam,m,K,R,n,seed){
+  const rnd=mulberry32(seed), expo=r=>-Math.log(1-rnd())/r;
+  const rttMin=R/60, free=new Array(m).fill(0);
+  let t=0,nextArr=expo(lam),q=[],head=0,servedAll=0,measured=0,ws=0,batches=0,loads=0;
+  const warm=Math.floor(n*0.1), samples=[], sampleStep=0.25, horizon=30;
+  let nextSample=sampleStep;
+  let guard=0;
+  while(measured<n && guard++<3000000){
+    let ej=0; for(let k=1;k<m;k++) if(free[k]<free[ej]) ej=k;
+    const dep=free[ej];
+    if(nextArr<=dep){
+      t=nextArr; q.push(t); nextArr=t+expo(lam);
+    }else{
+      t=dep;
+      const avail=q.length-head;
+      if(avail>0){
+        const take=Math.min(K,avail);
+        for(let i=0;i<take;i++){
+          const at=q[head++]; servedAll++;
+          if(servedAll>warm){ ws+=t-at; measured++; }
+        }
+        batches++; loads+=take;
+      }
+      free[ej]=t+rttMin*(1+0.10*(rnd()*2-1));
+    }
+    while(t>=nextSample && nextSample<=horizon){
+      samples.push([nextSample, q.length-head]); nextSample+=sampleStep;
+    }
+  }
+  return {AWT: ws/Math.max(1,measured), Lq: lam*ws/Math.max(1,measured),
+          avgLoad: loads/Math.max(1,batches), n:measured, samples, batches,
+          divergent: guard>=3000000};
+}
+
+/* ---------- SVG 折线图 ---------- */
+function lineChart(el,cfg){
+  const W=cfg.width||700,H=cfg.height||270,mg={l:56,r:14,t:14,b:36};
+  const pw=W-mg.l-mg.r,ph=H-mg.t-mg.b;
+  const allX=cfg.series.flatMap(s=>s.points.map(p=>p[0]))
+            .concat((cfg.vlines||[]).map(v=>v.x)).concat(cfg.markers?cfg.markers.map(m=>m.x):[]);
+  const allY=cfg.series.flatMap(s=>s.points.map(p=>p[1]).filter(v=>isFinite(v)))
+            .concat((cfg.hlines||[]).map(v=>v.y)).concat(cfg.markers?cfg.markers.map(m=>m.y):[]);
+  let xmin=cfg.xMin!==undefined?cfg.xMin:Math.min(...allX),xmax=cfg.xMax!==undefined?cfg.xMax:Math.max(...allX);
+  let ymin=cfg.yMin!==undefined?cfg.yMin:Math.min(...allY,0),ymax=cfg.yMax!==undefined?cfg.yMax:Math.max(...allY);
+  if(!isFinite(xmin)||!isFinite(xmax)||xmax===xmin){xmin=0;xmax=1;}
+  if(!isFinite(ymin))ymin=0; if(!isFinite(ymax)||ymax<=ymin)ymax=ymin+1;
+  if(cfg.yMax===undefined) ymax+=(ymax-ymin)*0.06;
+  const X=v=>mg.l+(v-xmin)/(xmax-xmin)*pw, Y=v=>mg.t+ph-(v-ymin)/(ymax-ymin)*ph;
+  const xf=cfg.xFmt||(v=>String(Math.round(v*10)/10)), yf=cfg.yFmt||(v=>String(Math.round(v*10)/10));
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif">`;
+  s+=`<rect x="${mg.l}" y="${mg.t}" width="${pw}" height="${ph}" fill="#fcfdff" stroke="#e8edf4"/>`;
+  for(let i=0;i<=5;i++){
+    const v=ymin+(ymax-ymin)*i/5,y=Y(v);
+    s+=`<line x1="${mg.l}" y1="${y}" x2="${mg.l+pw}" y2="${y}" stroke="#e8edf4" stroke-width="1"/>`;
+    s+=`<text x="${mg.l-7}" y="${y+3.5}" text-anchor="end" font-size="10.5" fill="#8794a5">${yf(v)}</text>`;
+  }
+  for(let i=0;i<=6;i++){
+    const v=xmin+(xmax-xmin)*i/6,x=X(v);
+    s+=`<line x1="${x}" y1="${mg.t}" x2="${x}" y2="${mg.t+ph}" stroke="#f0f3f8" stroke-width="1"/>`;
+    s+=`<text x="${x}" y="${mg.t+ph+16}" text-anchor="middle" font-size="10.5" fill="#8794a5">${xf(v)}</text>`;
+  }
+  (cfg.hlines||[]).forEach(h=>{
+    const y=Y(h.y); if(y<mg.t||y>mg.t+ph)return;
+    s+=`<line x1="${mg.l}" y1="${y}" x2="${mg.l+pw}" y2="${y}" stroke="${h.color||'#d0453b'}" stroke-width="1.3" stroke-dasharray="5 4"/>`;
+    s+=`<text x="${mg.l+pw-4}" y="${y-4}" text-anchor="end" font-size="10" fill="${h.color||'#d0453b'}">${h.label||''}</text>`;
+  });
+  (cfg.vlines||[]).forEach(v=>{
+    const x=X(v.x); if(x<mg.l||x>mg.l+pw)return;
+    s+=`<line x1="${x}" y1="${mg.t}" x2="${x}" y2="${mg.t+ph}" stroke="${v.color||'#e07b2f'}" stroke-width="1.3" stroke-dasharray="5 4"/>`;
+    s+=`<text x="${x+4}" y="${mg.t+12}" font-size="10" fill="${v.color||'#e07b2f'}">${v.label||''}</text>`;
+  });
+  cfg.series.forEach(se=>{
+    let seg=[],parts=[];
+    se.points.forEach(p=>{
+      if(!isFinite(p[1])){ if(seg.length)parts.push(seg); seg=[]; return; }
+      seg.push(`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`);
+    });
+    if(seg.length)parts.push(seg);
+    parts.forEach(pp=>{ if(pp.length>1) s+=`<polyline points="${pp.join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.width||2.2}" stroke-linejoin="round" stroke-linecap="round"${se.dash?' stroke-dasharray="6 4"':''}/>`; });
+    if(se.dots!==false) se.points.forEach((p,i)=>{ if(isFinite(p[1])&&(se.points.length<=46||i%3===0))
+      s+=`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="2" fill="${se.color}"><title>${se.name}: ${xf(p[0])}, ${yf(p[1])}</title></circle>`; });
+  });
+  (cfg.markers||[]).forEach(mk=>{
+    const x=X(mk.x),y=Y(mk.y);
+    s+=`<circle cx="${x}" cy="${y}" r="5.5" fill="#fff" stroke="${mk.color||'#2f5fe0'}" stroke-width="2.5"/>`;
+    s+=`<text x="${x+8}" y="${y-7}" font-size="10.5" font-weight="700" fill="${mk.color||'#2f5fe0'}">${mk.label||''}</text>`;
+  });
+  if(cfg.xLabel) s+=`<text x="${mg.l+pw/2}" y="${H-3}" text-anchor="middle" font-size="10.5" fill="#5b6878">${cfg.xLabel}</text>`;
+  if(cfg.yLabel) s+=`<text transform="translate(12,${mg.t+ph/2}) rotate(-90)" text-anchor="middle" font-size="10.5" fill="#5b6878">${cfg.yLabel}</text>`;
+  let lx=mg.l+8;
+  cfg.series.forEach(se=>{
+    s+=`<line x1="${lx}" y1="${mg.t+11}" x2="${lx+15}" y2="${mg.t+11}" stroke="${se.color}" stroke-width="2.5"/>`;
+    s+=`<text x="${lx+19}" y="${mg.t+14.5}" font-size="10.5" fill="#5b6878">${se.name}</text>`;
+    lx+=19+se.name.length*7.2+10;
+  });
+  s+='</svg>';
+  el.innerHTML=s;
+}
+
+/* ---------- 控件绑定 ---------- */
+function bindPair(r,n,cb){
+  const R=$(r),N=$(n);
+  R.addEventListener('input',()=>{N.value=R.value;cb();});
+  N.addEventListener('input',()=>{if(isFinite(parseFloat(N.value)))R.value=N.value;cb();});
+}
+const CP=[['c_lam_r','c_lam_n'],['c_mu_r','c_mu_n'],['c_c_r','c_c_n'],['c_dur_r','c_dur_n']];
+const EP=[['e_lam_r','e_lam_n'],['e_m_r','e_m_n'],['e_S_r','e_S_n']];
+CP.forEach(p=>bindPair(p[0],p[1],()=>render()));
+EP.forEach(p=>bindPair(p[0],p[1],()=>render()));
+['e_K','e_H','e_tf','e_ts','e_tp'].forEach(id=>$(id).addEventListener('input',()=>render()));
+
+const cPresets={
+  base:{lam:40,mu:3.6,c:12}, peak:{lam:34,mu:3.6,c:12},
+  expand:{lam:40,mu:3.6,c:14}, combo:{lam:34,mu:4.2,c:14}
+};
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  const p=cPresets[b.dataset.preset];
+  $('c_lam_r').value=$('c_lam_n').value=p.lam;
+  $('c_mu_r').value=$('c_mu_n').value=p.mu;
+  $('c_c_r').value=$('c_c_n').value=p.c;
+  render();
+}));
+const ePresets={
+  base:{lam:30,m:4,S:5}, lift:{lam:30,m:5,S:5}, zone:{lam:30,m:4,S:3},
+  peak:{lam:26,m:4,S:5}, combo:{lam:26,m:5,S:3}
+};
+document.querySelectorAll('[data-epreset]').forEach(b=>b.addEventListener('click',()=>{
+  const p=ePresets[b.dataset.epreset];
+  $('e_lam_r').value=$('e_lam_n').value=p.lam;
+  $('e_m_r').value=$('e_m_n').value=p.m;
+  $('e_S_r').value=$('e_S_n').value=p.S;
+  render();
+}));
+
+$('btn_csv').addEventListener('click',()=>{
+  const {lam,mu,c}=cState();
+  let csv='lambda,rho,Wq_s,Lq,capacity\n';
+  for(let L=10;L<=60;L+=1){ const r=erlangC(L,mu,c);
+    csv+=`${L},${f3(r.rho)},${isFinite(r.Wq)?(r.Wq*60).toFixed(2):'INF'},${isFinite(r.Lq)?f2(r.Lq):'INF'},${f2(c*mu)}\n`; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='canteen_lambda_sweep.csv'; a.click(); URL.revokeObjectURL(a.href);
+});
+
+function cState(){
+  return {lam:V('c_lam_n'),mu:V('c_mu_n'),c:V('c_c_n'),T:V('c_dur_n')};
+}
+function eState(){
+  return {lam:V('e_lam_n'),m:V('e_m_n'),K:V('e_K'),H:V('e_H'),tf:V('e_tf'),
+          S:V('e_S_n'),ts:V('e_ts'),tp:V('e_tp')};
+}
+function setV(id,v){ $(id).textContent=v; }
+function cls(id,v,good,warn){ const e=$(id); e.className='v '+(v<=good?'good':v<=warn?'warn':'bad'); }
+
+/* ---------- 主渲染 ---------- */
+let simTimer=null;
+let lastC=null,lastE=null,lastRTT=0;
+function render(){
+  const C=cState(), E=eState(), R=rttOf(E), CE=capOf(E.m,E.K,R);
+  lastC=C; lastE=E; lastRTT=R;
+  const cr=erlangC(C.lam,C.mu,C.c);
+  const rhoE=E.lam/CE;
+
+  /* 食堂文本 */
+  $('c_sub').innerHTML=`代入：a = λ/μ = ${f2(C.lam/C.mu)} Erlang，ρ = a/c = <b>${f3(cr.rho)}</b>，运力 C = c·μ = <b>${f1(C.c*C.mu)}</b> 人/min，稳态吞吐 = <b>${f1(Math.min(C.lam,C.c*C.mu))}</b> 人/min。`;
+  $('c_svc').value=(60/C.mu).toFixed(1); $('c_total').value=(C.lam*C.T).toFixed(0);
+  setV('k_c_rho',f3(cr.rho)); cls('k_c_rho',cr.rho,.8,.92);
+  setV('k_c_cap',f1(C.c*C.mu));
+  setV('k_c_pwait',cr.stable?pct(cr.Pwait):'100%');
+  setV('k_c_status',cr.stable?'稳定':'发散'); $('k_c_status').className='v '+(cr.stable?'good':'bad');
+  setV('k_c_lq',cr.stable?f2(cr.Lq):'∞');
+  setV('k_c_wq',cr.stable?f1(cr.Wq*60):'∞');
+  setV('k_c_w',cr.stable?f1(cr.W*60):'∞');
+  setV('k_c_l',cr.stable?f2(cr.L):'∞');
+  const netC=C.lam-C.c*C.mu;
+  $('k_c_backlog').className='callout '+(netC>0?'red':'green');
+  $('k_c_backlog').innerHTML= netC>0
+    ? `<span class="ct">⚠ 需求超过运力 ${f1(netC)} 人/分钟</span>${C.T} 分钟高峰内净积压约 <b>${f1(netC*C.T)} 人</b>，队伍持续变长、不会自行消散。需立即增开窗口或削峰。`
+    : `<span class="ct">✓ 运力富余 ${f1(-netC)} 人/分钟</span>${C.T} 分钟高峰总到达 <b>${f0(C.lam*C.T)} 人次</b>，理论可服务 <b>${f0(C.c*C.mu*C.T)} 人次</b>，富余 <b>${f1(-netC*C.T)} 人次</b>；系统稳定，排队属短时波动而非积压。`;
+  setV('s_c_rho',f3(cr.rho)); $('s_c_rho').className='v '+(cr.rho<=.85?'good':cr.rho<=1?'warn':'bad');
+  setV('s_c_wq',cr.stable?f1(cr.Wq*60)+' s':'∞');
+
+  /* 图1 多 c 曲线 */
+  const cs=[C.c-2,C.c,C.c+2,C.c+4].filter(x=>x>=1&&x<=26);
+  if(!cs.includes(C.c))cs.push(C.c);
+  const cols=['#7c56d6','#2f5fe0','#1e8e5a','#e07b2f','#d0453b'];
+  const ser1=cs.map((cc,i)=>{
+    const pts=[];
+    for(let L=10;L<=60;L+=1){ const r=erlangC(L,C.mu,cc); pts.push([L, r.stable?r.Wq*60:Infinity]); }
+    return {name:`c=${cc}`,color:cols[i%cols.length],points:pts,width:cc===C.c?3:1.8,dots:false};
+  });
+  const finiteMax=Math.max(1,...ser1.flatMap(s=>s.points.map(p=>p[1]).filter(v=>isFinite(v)&&v<300)));
+  lineChart($('chart1'),{series:ser1,height:270,xMin:10,xMax:60,yMin:0,
+    yMax:Math.min(180,Math.max(40,finiteMax*1.05)),
+    xLabel:'到达率 λ（人/分钟）',yLabel:'Wq（秒）',
+    xFmt:v=>String(Math.round(v)),yFmt:v=>String(Math.round(v)),
+    vlines:[{x:C.lam,label:'当前 λ',color:'#e07b2f'}],
+    hlines:[{y:60,label:'60 s 容忍线',color:'#d0453b'}]});
+  $('chart1').insertAdjacentHTML('beforeend',`<div class="legend">${ser1.map(s=>`<span><i style="background:${s.color}"></i>${s.name}${s.name==='c='+C.c?'（当前）':''}</span>`).join('')}</div>`);
+
+  /* 图2 队长 */
+  const pts2=[];
+  for(let L=10;L<=60;L+=1){ const r=erlangC(L,C.mu,C.c); pts2.push([L,r.stable?Math.min(r.Lq,200):Infinity]); }
+  lineChart($('chart2'),{series:[{name:`Lq (c=${C.c})`,color:'#2f5fe0',points:pts2,dots:false}],
+    height:270,xMin:10,xMax:60,yMin:0,yMax:Math.max(25,Math.min(120,Math.max(...pts2.map(p=>p[1]).filter(isFinite))*1.1)),
+    xLabel:'到达率 λ（人/分钟）',yLabel:'Lq（人）',xFmt:v=>String(Math.round(v)),yFmt:v=>String(Math.round(v)),
+    vlines:[{x:C.lam,label:'当前 λ',color:'#e07b2f'}],
+    hlines:[{y:5,label:'5人',color:'#c3cede'},{y:10,label:'10人',color:'#e0a45a'},{y:20,label:'20人',color:'#d0453b'}]});
+
+  /* 电梯文本 */
+  const rhoBatch=E.lam*R/(E.m*E.K*60);
+  $('e_sub').innerHTML=`代入：RTT = 2(${E.H}−1)×${E.tf} + (${E.S}+1)×${E.ts} + 2×${E.K}×${E.tp} = <b>${f1(R)} s</b>；单梯运力 ${f1(E.K*60/R)} 人/min；群梯 C = m·K·60/RTT = <b>${f1(CE)}</b> 人/min；ρ = λ/C = <b>${f3(rhoE)}</b>。`;
+  setV('k_e_rtt',f1(R)); setV('k_e_cap',f1(CE));
+  setV('k_e_rho',f3(rhoE)); cls('k_e_rho',rhoE,.8,.95);
+  setV('k_e_status',rhoE<1?'稳定':'发散'); $('k_e_status').className='v '+(rhoE<1?'good':'bad');
+  setV('k_e_5min',`${f0(5*E.lam)} / ${f1(5*CE)}`);
+  const net5=5*(E.lam-CE);
+  setV('k_e_backlog',net5>0?'+'+f1(net5):f1(net5)); $('k_e_backlog').className='v '+(net5>0?'bad':'good');
+  setV('k_e_q30',net5>0?'+'+f1(net5*6):'0'); $('k_e_q30').className='v '+(net5>0?'bad':'good');
+  let awtTxt='不稳定';
+  if(rhoE<1){
+    const br=erlangC(E.lam/E.K,60/R,E.m);
+    const awt=br.stable? 0.5*br.Wq + (E.K-1)/(2*E.lam) : Infinity;
+    awtTxt=isFinite(awt)?f1(awt*60)+' s':'—';
+  }
+  setV('k_e_awt',awtTxt);
+  $('k_e_msg').className='callout '+(rhoE>1?'red':rhoE>.85?'amber':'green');
+  $('k_e_msg').innerHTML= rhoE>1
+    ? `<span class="ct">⚠ 不稳定系统：ρ = ${f3(rhoE)} &gt; 1</span>每 5 分钟需求 ${f0(5*E.lam)} 人 &gt; 运力 ${f1(5*CE)} 人，净积压 <b>${f1(net5)} 人</b>；30 分钟高峰末队列线性外推约 <b>${f1(net5*6)} 人</b>。队列不会自行消散，必须扩容或削峰。注意：此时 W<sub>q</sub> 解析近似失效，请以第 4 节仿真曲线为准。`
+    : rhoE>0.85
+    ? `<span class="ct">△ 稳定但余量不足：ρ = ${f3(rhoE)}</span>系统理论上可收敛，但处于曲线"膝部"右侧，遇到 ±15% 的到达波动就会短暂失稳。建议把目标压到 ρ ≤ 0.85。`
+    : `<span class="ct">✓ 稳定且有余量：ρ = ${f3(rhoE)}</span>每 5 分钟富余 ${f1(-net5)} 人运力，对突发到达有缓冲，属于可用的设计区间。`;
+  setV('s_e_rho',f3(rhoE)); $('s_e_rho').className='v '+(rhoE<=.85?'good':rhoE<=1?'warn':'bad');
+
+  /* 图3 ρ vs m */
+  const mm=[]; for(let k=1;k<=10;k++) mm.push([k, E.lam/capOf(k,E.K,R)]);
+  lineChart($('chart3'),{series:[{name:'ρ(m)',color:'#2f5fe0',points:mm}],height:250,
+    xMin:1,xMax:10,yMin:0,yMax:Math.max(1.6,Math.min(3,mm[0][1]*1.05)),
+    xLabel:'电梯部数 m',yLabel:'利用率 ρ',xFmt:v=>String(Math.round(v)),yFmt:v=>v.toFixed(2),
+    hlines:[{y:1,label:'ρ = 1 稳定边界',color:'#d0453b'},{y:0.85,label:'ρ = 0.85 设计目标',color:'#1e8e5a'}],
+    markers:[{x:E.m,y:rhoE,label:'当前',color:'#e07b2f'}]});
+  $('chart3').insertAdjacentHTML('beforeend','<div class="legend"><span><i style="background:#2f5fe0"></i>利用率随电梯数变化</span><span><i style="background:#d0453b"></i>红色虚线以上 = 队列发散</span></div>');
+
+  /* 优化表（解析，快速） */
+  renderOptTables(C,E,R);
+  renderDyn(C,E,cr,rhoE,net5);
+
+  clearTimeout(simTimer); simTimer=setTimeout(()=>renderSim(C,E,R),170);
+}
+
+function f0(x){ return isFinite(x)?Math.round(x).toString():'∞'; }
+
+/* ---------- 优化表 ---------- */
+function renderOptTables(C,E,R){
+  const schemes=[
+    {n:'A 基准',lam:C.lam,c:C.c,mu:C.mu,cost:'—'},
+    {n:'B 错峰 −15%',lam:C.lam*0.85,c:C.c,mu:C.mu,cost:'低｜排课/预约调整'},
+    {n:'C 增开 2 窗',lam:C.lam,c:C.c+2,mu:C.mu,cost:'中｜人力 + 场地'},
+    {n:'D 单窗提速 17%',lam:C.lam,c:C.c,mu:C.mu*1.167,cost:'中｜预打包/双收银'},
+    {n:'E 组合（B+D）',lam:C.lam*0.85,c:C.c+2,mu:C.mu*1.167,cost:'中｜推荐'}
+  ];
+  const base=erlangC(schemes[0].lam,schemes[0].mu,schemes[0].c);
+  let h='<tr><th>方案</th><th class="num">λ</th><th class="num">c</th><th class="num">μ</th><th class="num">ρ</th><th class="num">W<sub>q</sub>(s)</th><th class="num">L<sub>q</sub>(人)</th><th class="num">降幅</th><th>成本 / 可行性</th></tr>';
+  schemes.forEach((s,i)=>{
+    const r=erlangC(s.lam,s.mu,s.c), q=r.stable?r.Wq*60:Infinity;
+    const drop=(base.stable&&base.Wq>0&&isFinite(q))?1-q/(base.Wq*60):null;
+    h+=`<tr class="${i===4?'hl':''}"><td>${s.n}</td><td class="num">${f1(s.lam)}</td><td class="num">${s.c}</td><td class="num">${f2(s.mu)}</td>
+      <td class="num" style="color:${r.rho>1?'#d0453b':r.rho>.85?'#e07b2f':'#1e8e5a'};font-weight:700">${f3(r.rho)}</td>
+      <td class="num">${isFinite(q)?f1(q):'∞'}</td><td class="num">${r.stable?f2(r.Lq):'∞'}</td>
+      <td class="num">${i===0?'基准':drop!==null?(drop>0?'−':' +')+f1(Math.abs(drop)*100)+'%':'—'}</td>
+      <td>${s.cost}</td></tr>`;
+  });
+  $('tbl_canteen_opt').innerHTML=h;
+  const q0=base.stable?base.Wq*60:120;
+  $('c_opt_bar').innerHTML='<div class="note" style="margin-bottom:6px">W<sub>q</sub> 相对长度（越短越好）：</div>'+schemes.map((s,i)=>{
+    const r=erlangC(s.lam,s.mu,s.c),q=r.stable?r.Wq*60:120,w=clamp(q/Math.max(q0,1)*100,2,100);
+    return `<div style="display:flex;align-items:center;gap:9px;font-size:12px;margin:4px 0"><span style="width:110px;color:var(--muted)">${s.n}</span><span class="bar" style="flex:1"><i style="width:${w}%;background:${i===4?'#1e8e5a':'#2f5fe0'}"></i></span><b style="width:58px;text-align:right">${isFinite(q)?f1(q)+' s':'∞'}</b></div>`;
+  }).join('');
+
+  const es=[
+    {n:'A 基准',lam:E.lam,m:E.m,S:E.S,cost:'—'},
+    {n:'B 加 1 部梯',lam:E.lam,m:E.m+1,S:E.S,cost:'高｜土建 + 设备'},
+    {n:'C 群控 S−2',lam:E.lam,m:E.m,S:Math.max(1,E.S-2),cost:'低｜调度算法/分区'},
+    {n:'D 错峰 λ−13%',lam:E.lam*0.87,m:E.m,S:E.S,cost:'低｜错峰上课'},
+    {n:'E 组合（C+D）',lam:E.lam*0.87,m:E.m,S:Math.max(1,E.S-2),cost:'低｜推荐'}
+  ];
+  let t='<tr><th>方案</th><th class="num">λ</th><th class="num">m</th><th class="num">S</th><th class="num">RTT(s)</th><th class="num">C(人/min)</th><th class="num">ρ</th><th class="num">5-min 积压(人)</th><th>成本 / 可行性</th></tr>';
+  es.forEach((s,i)=>{
+    const p=Object.assign({},E,{S:s.S}),r2=rttOf(p),c2=capOf(s.m,E.K,r2),rr=s.lam/c2,bk=5*(s.lam-c2);
+    const pill=rr>1?'<span class="pill bad">发散</span>':rr>.85?'<span class="pill warn">临界</span>':'<span class="pill ok">稳定</span>';
+    t+=`<tr class="${i===4?'hl':''}"><td>${s.n} ${pill}</td><td class="num">${f1(s.lam)}</td><td class="num">${s.m}</td><td class="num">${s.S}</td>
+      <td class="num">${f1(r2)}</td><td class="num">${f1(c2)}</td>
+      <td class="num" style="font-weight:700;color:${rr>1?'#d0453b':rr>.85?'#e07b2f':'#1e8e5a'}">${f3(rr)}</td>
+      <td class="num" style="color:${bk>0?'#d0453b':'#1e8e5a'}">${bk>0?'+':''}${f1(bk)}</td><td>${s.cost}</td></tr>`;
+  });
+  $('tbl_elevator_opt').innerHTML=t;
+}
+
+function renderDyn(C,E,cr,rhoE,net5){
+  const wq=cr.stable?f1(cr.Wq*60):'∞';
+  $('dyn_summary').innerHTML=`<span class="ct">当前配置快照（随实验台实时更新）</span>
+  食堂：λ=${f1(C.lam)} 人/min、${C.c} 个窗口、单窗 ${f2(C.mu)} 人/min → <b>ρ=${f3(cr.rho)}</b>，平均排队 <b>${wq} 秒 / ${cr.stable?f2(cr.Lq):'∞'} 人</b>，${cr.stable?'运力富余 '+f1(C.c*C.mu-C.lam)+' 人/min':'<b>需求已超运力，队列发散</b>'}。<br>
+  电梯：λ=${f1(E.lam)} 人/min、${E.m} 部 ${E.K} 人梯、RTT ${f1(lastRTT)} s → <b>ρ=${f3(rhoE)}</b>，${rhoE>1?`每 5 分钟净积压 <b>${f1(net5)} 人</b>，属不稳定系统`:'系统稳定'}。<br>
+  <b>一句话建议：</b>${cr.rho>0.85||rhoE>0.85?'优先做错峰削峰与减少停站/提速，把 ρ 压到 0.85 以下，再考虑增开窗口或加梯。':'当前余量充足，重点是保持监控而非继续扩容。'}`;
+}
+
+/* ---------- 仿真渲染（防抖） ---------- */
+function renderSim(C,E,R){
+  const NS=60000, NE=15000, seed=20261124;
+  const hist=[];
+  const sc=simMMC(C.lam,C.mu,C.c,NS,seed,hist);
+  const cr=erlangC(C.lam,C.mu,C.c);
+  const dev=(sc.WqS-cr.Wq*60)/(cr.Wq*60);
+  let rows='<tr><th>场景</th><th class="num">指标</th><th class="num">解析解</th><th class="num">仿真值 [95% CI]</th><th class="num">点偏差</th><th>判定</th></tr>';
+  const add=(scene,name,a,b,lo,hi)=>{
+    const d=isFinite(a)&&isFinite(b)&&a!==0?(b-a)/a:NaN;
+    const ok=isFinite(a)&&a>=lo&&a<=hi;
+    rows+=`<tr><td>${scene}</td><td class="num">${name}</td><td class="num">${f2(a)}</td>
+      <td class="num">${f2(b)} <small style="color:var(--faint)">[${f1(lo)}, ${f1(hi)}]</small></td>
+      <td class="num">${isFinite(d)?(d>0?'+':'')+f1(d*100)+'%':'—'}</td>
+      <td>${isFinite(d)?(ok?'<span class="pill ok">✓ 统计一致</span>':'<span class="pill warn">△ CI 未覆盖</span>'):'<span class="pill warn">不适用</span>'}</td></tr>`;
+  };
+  if(cr.stable){
+    add('食堂 M/M/c','W<sub>q</sub>（秒）',cr.Wq*60,sc.WqS,sc.lo,sc.hi);
+    add('食堂 M/M/c','W（秒）',cr.W*60,sc.W,sc.lo+60/C.mu,sc.hi+60/C.mu);
+    add('食堂 M/M/c','L<sub>q</sub>（人）',cr.Lq,sc.Lq,sc.lo*C.lam/60,sc.hi*C.lam/60);
+  }else{
+    rows+='<tr><td>食堂 M/M/c</td><td colspan="5" style="color:var(--red)">ρ ≥ 1，解析解发散（W<sub>q</sub> = ∞）；仿真队列线性增长，见下方说明。</td></tr>';
+  }
+
+  const se=simElevator(E.lam,E.m,E.K,R,NE,seed+1);
+  const eo=simElevator(E.lam*0.87,Math.max(1,E.m),E.K,
+              rttOf(Object.assign({},E,{S:Math.max(1,E.S-2)})),NE,seed+2);
+  const rhoE=E.lam/capOf(E.m,E.K,R);
+  rows+=`<tr><td>电梯（ρ=${f3(rhoE)}）</td><td class="num">平均候梯 AWT（秒）</td><td class="num">${rhoE<1?'½·Wq(M/M/m) 近似':'解析失效'}</td>
+    <td class="num">${f1(se.AWT*60)}${rhoE>1?'<small style="color:var(--faint)"> ↑</small>':''}</td><td class="num">—</td><td>${rhoE>1?'<span class="pill bad">队列发散</span>':'<span class="pill ok">有限时域估计</span>'}</td></tr>`;
+  rows+=`<tr><td>电梯组合优化</td><td class="num">平均候梯 AWT（秒）</td><td class="num">—</td><td class="num">${f1(eo.AWT*60)}</td><td class="num">—</td>
+    <td><span class="pill ok">队列受控</span></td></tr>`;
+  $('tbl_validate').innerHTML=rows;
+  const imp=se.AWT>0?(1-eo.AWT/se.AWT)*100:0;
+  const covered=cr.stable&&cr.Wq*60>=sc.lo&&cr.Wq*60<=sc.hi;
+  $('sim_note').innerHTML=`样本：食堂单次长运行 80,000 人（预热 20,000 丢弃 + 测量 60,000），分 ${sc.reps} 批用<b>批均值法</b>估计 95% CI；电梯 ${NE.toLocaleString()} 人 ×2 组。PRNG = mulberry32，种子 ${seed}。<br>
+    食堂 W<sub>q</sub> 点估计偏差 <b>${isFinite(dev)?f1(Math.abs(dev)*100)+'%':'—'}</b>，95% CI = [${f1(sc.lo)}, ${f1(sc.hi)}] 秒，解析值 ${f1(cr.Wq*60)} 秒 <b>${covered?'落在区间内 → 统计一致':'未落在区间内'}</b>。<br>
+    <b>注意：</b>ρ = ${f3(cr.rho)} 时等待序列自相关极强，单次点估计波动可达 ±10%，CI 较宽是正常现象；因此这里以「解析解是否落入 95% CI」而非点偏差判定一致性。这也说明：把系统设计在 ρ &gt; 0.9 时，连"平均等多久"都难以稳定估计。<br>
+    电梯基准 ρ = ${f3(rhoE)}，组合优化使 30 分钟有限时域内平均候梯时间下降 <b>${f1(Math.max(0,imp))}%</b>${rhoE>1?'（基准为发散系统，↑ 标记的 AWT 会随观察时窗继续上升、不存在稳态值，此对比仅作示意）':''}；基准平均装载 ${f1(se.avgLoad)} 人/批（额定 ${E.K} 人）。`;
+
+  /* 图5 收敛 */
+  const conv=hist.filter((_,i)=>i%2===0);
+  const tail=conv.filter(p=>p[0]>3000).map(p=>p[1]);
+  const yTop=Math.max(isFinite(cr.Wq*60)?cr.Wq*60*1.8:40, Math.max(0,...tail)*1.08, 10);
+  lineChart($('chart5'),{series:[{name:'仿真累积 Wq',color:'#2f5fe0',points:conv,dots:false}],
+    height:250,xMin:0,xMax:NS,yMin:0,yMax:Math.min(200,yTop),
+    xLabel:'累计样本数（人，已扣除预热）',yLabel:'Wq（秒）',
+    xFmt:v=>Math.round(v/1000)+'k',yFmt:v=>String(Math.round(v)),
+    hlines:[{y:cr.stable?cr.Wq*60:60,label:'Erlang-C 解析值',color:'#e07b2f'}]});
+  $('chart5').insertAdjacentHTML('beforeend','<div class="legend"><span><i style="background:#2f5fe0"></i>仿真</span><span><i style="background:#e07b2f"></i>解析解</span></div>');
+
+  /* 图4 队列演化 */
+  const cap=Math.max(10,...se.samples.map(p=>p[1]),...eo.samples.map(p=>p[1]));
+  lineChart($('chart4'),{series:[
+      {name:'基准方案',color:'#2f5fe0',points:se.samples,dots:false},
+      {name:'组合优化',color:'#1e8e5a',points:eo.samples,dots:false}],
+    height:250,xMin:0,xMax:30,yMin:0,yMax:Math.ceil(cap*1.1/10)*10,
+    xLabel:'早高峰开始后时间（分钟）',yLabel:'候梯队列（人）',
+    xFmt:v=>String(Math.round(v)),yFmt:v=>String(Math.round(v)),
+    vlines:[{x:5,label:'5min',color:'#c3cede'},{x:15,label:'15min',color:'#c3cede'},{x:25,label:'25min',color:'#c3cede'}]});
+  $('chart4').insertAdjacentHTML('beforeend','<div class="legend"><span><i style="background:#2f5fe0"></i>基准（ρ&gt;1 时队列单调增长）</span><span><i style="background:#1e8e5a"></i>组合优化</span></div>');
+}
+
+render();
+</script>
+</body>
+</html>
