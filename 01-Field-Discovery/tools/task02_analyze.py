@@ -104,12 +104,13 @@ def main() -> int:
         dt = t_end - t0
         dtemp_rate = slope([m for m in mins], ts) if all(v is not None for v in mins) else 0.0
         drop = (b_start - bs[-1]) if (b_start is not None and bs[-1] is not None) else None
-        drop_rate = (drop / args.duration) if drop is not None else None
+        span_full = max(mins) if mins else args.duration
+        drop_rate = (drop / span_full) if drop is not None else None
         tail = ts[-1] - ts[-2] if len(ts) >= 2 else 0.0
         summary.append({
             "mode": mode, "t0": t0, "t_end": t_end, "dt": dt,
             "rate": dtemp_rate, "b0": b_start, "b_end": bs[-1],
-            "drop": drop, "drop_rate": drop_rate, "tail": tail,
+            "drop": drop, "drop_rate": drop_rate, "tail": tail, "span": span_full,
             "t_start_from_csv": t_start is None,
         })
         def f(v, nd=1, sign=False):
@@ -120,7 +121,7 @@ def main() -> int:
               f"{f(b_start, 0)} | {f(drop, 0) if drop is not None else ''} | "
               f"{f(drop_rate, 2) if drop_rate is not None else ''} | {f(tail, 1, True)} |")
     print()
-    print("> 升温速率用 6 个时间点做最小二乘拟合，比「ΔT÷30」更抗单点读数抖动。")
+    print("> 升温速率用段内全部记录点做最小二乘拟合，比「ΔT ÷ 时长」更抗单点读数抖动。")
     print("> 起点温度取自 `task02-phase-start.csv`；缺起点时会退回第一个记录点，并扣掉那 5 分钟跨度。")
     print()
 
@@ -137,13 +138,14 @@ def main() -> int:
             print(f"2. {'、'.join(s['mode'] for s in conv)} 在最后 5 分钟内温差 ≤0.3 ℃，"
                   f"说明已接近散热平衡（曲线走平）；其余工况仍在爬升，说明还没触顶。")
         else:
-            print("2. 四段最后 5 分钟内温度都还在上升（温差 >0.3 ℃），"
-                  "30 分钟没跑到热平衡——这是「时长短于热时间常数」的证据，要写进局限。")
+            sp = max(s["span"] for s in summary)
+            print(f"2. 四段最后 5 分钟内温度都还在上升（温差 >0.3 ℃），"
+                  f"{sp:g} 分钟内没跑到热平衡——这是「观测时长短于热时间常数」的证据，要写进局限。")
         drains = [s for s in summary if s["drop_rate"] is not None]
         if drains:
             worst = max(drains, key=lambda s: s["drop_rate"])
             print(f"3. 掉电最快的是 **{worst['mode']}**（{worst['drop_rate']:.2f} %/min，"
-                  f"30 分钟掉 {worst['drop']:.0f}%）。把四段的掉电速率排序，"
+                  f"{worst['span']:g} 分钟掉 {worst['drop']:.0f}%）。把四段的掉电速率排序，"
                   f"与升温速率排序对照，就能回答「是升温拖垮续航，还是功耗本身高」。")
         if all(s["t_start_from_csv"] for s in summary):
             print()
